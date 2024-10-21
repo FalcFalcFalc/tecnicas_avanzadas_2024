@@ -1,6 +1,14 @@
 const express = require("express");
 const app = express();
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const port = 3000;
+const mysql = require('mysql')
+const connection = mysql.createConnection({
+  host:     "localhost",
+  user:     "root",
+  password: "contraseña12345",
+  database: "db_tp"
+});
+connection.connect();
 
 const http = require("http").createServer(app);
 const cors = require("cors");
@@ -14,86 +22,189 @@ const AuthController = require('./controllers/auth');
 const Middleware = require('./middleware/auth-middleware');
 const MailController = require('./controllers/mail');
 
-// Create a MongoClient with a MongoClientOptions object to set the Stable API version
-const db = new MongoClient(uri, {
-  serverApi: {
-    version: ServerApiVersion.v1,
-    strict: true,
-    deprecationErrors: true,
-  }
-});
-
 app.use(cors());
 app.use(express.json());
+app.set('json spaces', 2)
 
-  app.get("/barrio/", (req, res) => {
-    //res.send("SELECT * FROM barrio");
-    res.status(200).json(`SELECT * FROM barrio`);
+  app.get("/barrios/", (req, res) => {
+    connection.query(`SELECT * FROM barrio`,function(err,rows,fields){
+      if(err) {
+        console.log(err.message);
+        res.status(err.code);
+      }
+      else{
+        console.log("OK");
+        res.status(200).json(rows);
+      }
+    })
   });
 
-  app.get("/barrio/:id/estacion/", (req, res) => {
+  app.get("/barrios/:id/", (req, res) => {
     const {id} = req.params;
-    //res.send("SELECT * FROM barrio");
-    res.status(200).json(`SELECT * FROM estacion WHERE barrio_id = ${id}`);
+    connection.query(`SELECT * FROM barrio WHERE barrio_id = ${id}`,function(err,rows,fields){
+      if(err) {
+        res.status(err.code);
+      }
+      else{
+        res.status(200).json(rows[0]);
+      }
+    })
   });
 
-  app.get("/estacion/", (req, res) => {
-    //res.send("SELECT * FROM estacion");
-    res.status(200).json(`SELECT * FROM estacion`);
-  });
-
-  app.get("/estacion/:id/retiros/", (req, res) => {
+  app.get("/barrios/:id/estaciones/", (req, res) => {
     const {id} = req.params;
-    //res.send("SELECT * FROM estacion");
-    res.status(200).json(`SELECT * FROM retiros WHERE estacion_salida = ${id}`);
+    connection.query(`SELECT * FROM estacion WHERE barrio_id = ${id}`,function(err,rows,fields){
+      if(err) {
+        res.status(err.code);
+      }
+      else{
+        res.status(200).json(rows);
+      }
+    })
+  });
+  
+  app.get("/bicicletas/", (req, res) => {
+    connection.query(`SELECT * FROM bicicleta`,function(err,rows,fields){
+      if(err) {
+        console.log(err.message);
+        res.status(err.code);
+      }
+      else{
+        console.log("OK");
+        res.status(200).json(rows);
+      }
+    })
   });
 
-  app.get("/usuario/", (req, res) => {
-    //res.send("SELECT * FROM usuario");
-    res.status(200).json(`SELECT * FROM usuario`);
-  });
-
-  app.get("/estacion/:id/usuario/", (req, res) => {
+  app.get("/bicicletas/:id/", (req, res) => {
     const {id} = req.params;
-    //res.send("SELECT * FROM usuario");
-    res.status(200).json(`SELECT * FROM estacion e, retiro r WHERE e.estacion_id IN [r.estacion_salida, r.estacion_llegada] AND r.user_id = ${id}`);
+    connection.query(`SELECT * FROM bicicleta WHERE bicicleta_id = ${id}`,function(err,rows,fields){
+      if(err) {
+        res.status(err.code);
+      }
+      else{
+        res.status(200).json(rows[0]);
+      }
+    })
   });
 
-  app.get("/usuario/:id/bicicletas/", (req, res) => {
+  app.get("/estaciones/", (req, res) => {
+    connection.query(`SELECT * FROM estacion`,function(err,rows,fields){
+      if(err) {
+        console.log(err.message);
+        res.status(err.code);
+      }
+      else{
+        console.log("OK");
+        res.status(200).json(rows);
+      }
+    })
+  });
+
+  app.get("/estaciones/:id/", (req, res) => {
     const {id} = req.params;
-    //res.send("SELECT * FROM usuario");
-    res.status(200).json(`SELECT * FROM bicicleta b, retiro r WHERE b.bici_id = r.bici_id AND r.user_id = ${id}`);
+    connection.query(`SELECT * FROM estacion WHERE estacion_id = ${id}`,function(err,rows,fields){
+      if(err) {
+        res.status(err.code);
+      }
+      else{
+        res.status(200).json(rows[0]);
+      }
+    })
   });
 
-  app.get("/estacion/:id/bicicleta/", (req, res) => {
+  app.get("/estaciones/:id/bicicletas/", (req, res) => {
     const {id} = req.params;
-    //res.send("SELECT * FROM bicicleta");
-    res.status(200).json(`SELECT * FROM bicicleta WHERE estacion_id = ${id}`);
+    connection.query(`SELECT * FROM bicicleta b WHERE b.estacion_id = ${id}`,function(err,rows,fields){
+      if(err) {
+        res.status(err.code);
+      }
+      else{
+        res.status(200).json(rows);
+      }
+    })
   });
 
-  app.get("/bicicleta/", (req, res) => {
-    //res.send("SELECT * FROM bicicleta");
-    res.status(200).json(`SELECT * FROM bicicleta`);
+  app.get("/estaciones/:id/retiros/", (req, res) => {
+    const {id} = req.params;
+    connection.query(`SELECT * FROM retiro WHERE estacion_salida = ${id}`,function(err,rows,fields){
+      if(err) {
+        res.status(err.code);
+      }
+      else{
+        res.status(200).json(rows);
+      }
+    })
   });
 
-  app.get("/bicicleta/paraReparar/", (req, res) => {
-    //res.send("SELECT * FROM bicicleta");
-    res.status(200).json(`SELECT * FROM bicicleta WHERE dañada = true`);
+  app.get("/estaciones/:id/usuarios/", (req, res) => {
+    const {id} = req.params;
+    connection.query(`SELECT * FROM estacion e, retiro r WHERE e.estacion_id IN [r.estacion_salida, r.estacion_llegada] AND r.user_id = ${id}`,function(err,rows,fields){
+      if(err) {
+        res.status(err.code);
+      }
+      else{
+        res.status(200).json(rows);
+      }
+    })
   });
 
-  app.get("/retiro/", (req, res) => {
-    //res.send("SELECT * FROM retiro");
-    res.status(200).json(`SELECT * FROM retiro`);
+  app.get("/usuarios/", (req, res) => {
+    connection.query(`SELECT * FROM usuario`,function(err,rows,fields){
+      if(err) {
+        console.log(err.message);
+        res.status(err.code);
+      }
+      else{
+        console.log("OK");
+        res.status(200).json(rows);
+      }
+    })
+  });
+
+  app.get("/usuarios/:id/", (req, res) => {
+    const {id} = req.params;
+    connection.query(`SELECT * FROM usuario WHERE user_id = ${id}`,function(err,rows,fields){
+      if(err) {
+        res.status(err.code);
+      }
+      else{
+        res.status(200).json(rows[0]);
+      }
+    })
+  });
+
+  app.get("/usuarios/:id/bicicletas/", (req, res) => {
+    const {id} = req.params;
+    connection.query(`SELECT * FROM bicicleta b, retiro r WHERE b.bicicleta_id = r.bicicleta_id AND r.user_id = ${id}`,function(err,rows,fields){
+      if(err) {
+        res.status(err.code);
+      }
+      else{
+        res.status(200).json(rows);
+      }
+    })
+  });
+
+  app.get("/retiros/", (req, res) => {
+    connection.query(`SELECT * FROM retiro`,function(err,rows,fields){
+      if(err) {
+        res.status(err.code);
+      }
+      else{
+        res.status(200).json(rows);
+      }
+    })
   });
 
 // GET - POST - DELETE - PUT - PATCH 
 
-  app.post("/retiro/",(req,res) => {
-    res.send("INSERT INTO retiro (bici_id, user_id) VALUES {...}"); //me gustaría mejor usar un procedure
+  app.post("/retiros/",(req,res) => {
+    res.send("INSERT INTO retiro (bicicleta_id, user_id) VALUES {...}"); //me gustaría mejor usar un procedure
   });
 
-  app.patch("/retiro/",(req,res) => {
-      res.send("UPDATE retiro (bici_id, estacion_llegada) VALUES {...} WHERE estacion_llegada IS NULL and bici_id = ${id}"); //me gustaría mejor usar un procedure
+  app.patch("/retiros/",(req,res) => {
+      res.send("UPDATE retiro (bicicleta_id, estacion_llegada) VALUES {...} WHERE estacion_llegada IS NULL and bicicleta_id = ${id}"); //me gustaría mejor usar un procedure
   });
 
 app.post("/auth/login", async (req,res) => {
