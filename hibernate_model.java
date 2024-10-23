@@ -70,8 +70,8 @@ public class Usuario {
 
     private String nombre;    
     private String apellido;    
-    private int deudaActual;
-    private int deudaHistorica;
+    private int deuda_actual;
+    private int deuda_historica;
 
     public RetirarBici(int biciId) {
         Bicicleta bici = session.get(Bicicleta.class, biciId);
@@ -95,7 +95,6 @@ public class Estacion {
     private int capacidad;
 
     public DevolverBici(Bicicleta bici) {
-        Bicicleta bici = session.get(Bicicleta.class, biciId);
         Retiro retiro = bici.GetUltimoRetiro();
         
         retiro.Cerrar(this);
