@@ -1,6 +1,7 @@
-const { DataTypes, Model } = require('sequelize');
-const { sequelizeConnection } = require('../middleware/sequelizeConnection')
-const { Estacion } = require('Estacion')
+const { Sequelize, DataTypes, Model, Deferrable } = require('sequelize');
+const sequelize = new Sequelize('sqlite::memory:');
+
+const { Estacion } = require('./Estacion')
 
 class Bicicleta extends Model {
     retirar(){
@@ -38,7 +39,7 @@ Bicicleta.init(
         }
     },
     {
-        sequelizeConnection,
+        sequelize: sequelize,
         modelName: 'Bicicleta'
     }
 )

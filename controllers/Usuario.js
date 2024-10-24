@@ -1,6 +1,5 @@
-const { DataTypes, Model } = require('sequelize');
-const { sequelizeConnection } = require('../middleware/sequelizeConnection')
-const { MySqlDialect } = require('@sequelize/mysql');
+const { Sequelize, DataTypes, Model } = require('sequelize');
+const sequelize = new Sequelize('sqlite::memory:');
 
 class Usuario extends Model {
     nombreCompleto() {
@@ -63,7 +62,7 @@ Usuario.init(
         }
     },
     {
-        sequelizeConnection,
+        sequelize: sequelize,
         modelName: 'Usuario'
     }
 )

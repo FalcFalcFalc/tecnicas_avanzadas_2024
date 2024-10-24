@@ -1,10 +1,9 @@
-const { DataTypes, Model } = require('sequelize');
-const { sequelizeConnection } = require('../middleware/sequelizeConnection')
-const { Bicicleta } = require('Bicicleta')
-const { Estacion } = require('Estacion')
-const { Usuario } = require('Usuario')
+const { Sequelize, DataTypes, Model, Deferrable } = require('sequelize');
+const sequelize = new Sequelize('sqlite::memory:');
 
-
+const { Bicicleta } = require('./Bicicleta')
+const { Estacion } = require('./Estacion')
+const { Usuario } = require('./Usuario')
 
 class Retiro extends Model {
     cerrar(estacion) {
@@ -68,7 +67,7 @@ Retiro.init(
         },
     },
     {
-        sequelizeConnection,
+        sequelize: sequelize,
         modelName: 'Retiro'
     }
 )

@@ -1,5 +1,10 @@
 
-const {Estacion, Bicicleta, Usuario, Barrio, Retiro} = require('./controllers/Barrio');
+const { Barrio } = require('./controllers/Barrio');
+const { Bicicleta } = require('./controllers/Bicicleta');
+const { Usuario } = require('./controllers/Usuario');
+const { Retiro } = require('./controllers/Retiro');
+const { Estacion } = require('./controllers/Estacion');
+
 const express = require("express");
 const app = express();
 
@@ -24,8 +29,10 @@ const { userInfo } = require("os");
 app.use(cors());
 app.use(express.json());
 
-  app.get("/barrios/", (req, res) => {
-    res.status(200).json(Barrio.findAll({}));
+  app.get("/barrios/", async (req, res) => {
+    console.log(Barrio === sequelize.models.Barrio); // true
+    const query = await Barrio.findAll({})
+    res.status(200).json(query);
     /**
      * 
      connection.query(`SELECT * FROM barrio`,function(err,rows,fields){
@@ -40,7 +47,7 @@ app.use(express.json());
   */
   });
 
-  app.get("/barrios/:id/", (req, res) => {
+  app.get("/barrios/:id/", async (req, res) => {
     const {id} = req.params;
     connection.query(`SELECT * FROM barrio WHERE barrio_id = ${id}`,function(err,rows,fields){
       if(err) {
@@ -54,7 +61,7 @@ app.use(express.json());
     })
   });
 
-  app.get("/barrios/:id/estaciones/", (req, res) => {
+  app.get("/barrios/:id/estaciones/", async (req, res) => {
     const {id} = req.params;
     connection.query(`SELECT * FROM estacion WHERE barrio_id = ${id}`,function(err,rows,fields){
       if(err) {
@@ -67,7 +74,7 @@ app.use(express.json());
     })
   });
   
-  app.get("/bicicletas/", (req, res) => {
+  app.get("/bicicletas/", async (req, res) => {
     connection.query(`SELECT * FROM bicicleta`,function(err,rows,fields){
       if(err) {
         console.log(err.message);
@@ -80,7 +87,7 @@ app.use(express.json());
     })
   });
 
-  app.get("/bicicletas/:id/", (req, res) => {
+  app.get("/bicicletas/:id/", async (req, res) => {
     const {id} = req.params;
     connection.query(`SELECT * FROM bicicleta WHERE bicicleta_id = ${id}`,function(err,rows,fields){
       if(err) {
@@ -93,7 +100,7 @@ app.use(express.json());
     })
   });
 
-  app.get("/estaciones/", (req, res) => {
+  app.get("/estaciones/", async (req, res) => {
     connection.query(`SELECT * FROM estacion`,function(err,rows,fields){
       if(err) {
         console.log(err.message);
@@ -106,7 +113,7 @@ app.use(express.json());
     })
   });
 
-  app.get("/estaciones/:id/", (req, res) => {
+  app.get("/estaciones/:id/", async (req, res) => {
     const {id} = req.params;
     connection.query(`SELECT * FROM estacion WHERE estacion_id = ${id}`,function(err,rows,fields){
       if(err) {
@@ -119,7 +126,7 @@ app.use(express.json());
     })
   });
 
-  app.get("/estaciones/:id/bicicletas/", (req, res) => {
+  app.get("/estaciones/:id/bicicletas/", async (req, res) => {
     const {id} = req.params;
     connection.query(`SELECT * FROM bicicleta b WHERE b.estacion_id = ${id}`,function(err,rows,fields){
       if(err) {
@@ -132,7 +139,7 @@ app.use(express.json());
     })
   });
 
-  app.get("/estaciones/:id/retiros/", (req, res) => {
+  app.get("/estaciones/:id/retiros/", async (req, res) => {
     const {id} = req.params;
     connection.query(`SELECT * FROM retiro WHERE estacion_end = ${id}`,function(err,rows,fields){
       if(err) {
@@ -145,7 +152,7 @@ app.use(express.json());
     })
   });
 
-  app.get("/estaciones/:id/usuarios/", (req, res) => {
+  app.get("/estaciones/:id/usuarios/", async (req, res) => {
     const {id} = req.params;
     connection.query(`SELECT * FROM estacion e, retiro r WHERE e.estacion_id IN(r.estacion_start, r.estacion_end) AND r.user_id = ${id}`,function(err,rows,fields){
       if(err) {
@@ -158,7 +165,7 @@ app.use(express.json());
     })
   });
 
-  app.get("/usuarios/", (req, res) => {
+  app.get("/usuarios/", async (req, res) => {
     connection.query(`SELECT * FROM usuario`,function(err,rows,fields){
       if(err) {
         console.log(err.message);
@@ -171,7 +178,7 @@ app.use(express.json());
     })
   });
 
-  app.get("/usuarios/:id/", (req, res) => {
+  app.get("/usuarios/:id/", async (req, res) => {
     const {id} = req.params;
     connection.query(`SELECT * FROM usuario WHERE user_id = ${id}`,function(err,rows,fields){
       if(err) {
@@ -184,7 +191,7 @@ app.use(express.json());
     })
   });
 
-  app.get("/usuarios/:id/bicicletas/", (req, res) => {
+  app.get("/usuarios/:id/bicicletas/", async (req, res) => {
     const {id} = req.params;
     connection.query(`SELECT * FROM bicicleta b, retiro r WHERE b.bicicleta_id = r.bici_id AND r.user_id = ${id}`,function(err,rows,fields){
       if(err) {
@@ -197,7 +204,7 @@ app.use(express.json());
     })
   });
 
-  app.get("/retiros/", (req, res) => {
+  app.get("/retiros/", async (req, res) => {
     connection.query(`SELECT * FROM retiro`,function(err,rows,fields){
       if(err) {
         res.status(501).send(err.message);;
@@ -209,7 +216,7 @@ app.use(express.json());
     })
   });
 
-  app.get("/retiros/abiertos", (req, res) => {
+  app.get("/retiros/abiertos", async (req, res) => {
     connection.query(`SELECT * FROM retiro WHERE time_end IS NULL`,function(err,rows,fields){
       if(err) {
         res.status(501).send(err.message);;
@@ -221,7 +228,7 @@ app.use(express.json());
     })
   });
 
-  app.get("/retiros/cerrados", (req, res) => {
+  app.get("/retiros/cerrados", async (req, res) => {
     connection.query(`SELECT * FROM retiro WHERE time_end IS NOT NULL`,function(err,rows,fields){
       if(err) {
         res.status(501).send(err.message);;
