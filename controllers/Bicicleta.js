@@ -1,17 +1,24 @@
-const { Sequelize, DataTypes, Model, Deferrable } = require('sequelize');
-const sequelize = new Sequelize('sqlite::memory:');
+import{ Sequelize, DataTypes, Model, Deferrable } from 'sequelize';
+import sequelizeConnection from '../middleware/sequelizeConnection.js';
 
-const { Estacion } = require('./Estacion')
 
-class Bicicleta extends Model {
-    retirar(){
+import { Estacion } from './Estacion.js'
+import { Retiro } from './Retiro.js';
+
+export class Bicicleta extends Model {
+    async retirar(){
         this.estacion_id = null
     }
-    devolver(estacion){
+    async devolver(estacion){
         this.estacion_id = estacion.estacion_id
     }
-    getUltimoRetiro(){
-        return Retiro.findOne({bicicleta_id: this.bicicleta_id, estacion_end: null})
+    async getUltimoRetiro(){
+        return await Retiro.findOne({
+            where: {
+                bicicleta_id: this.bicicleta_id,
+                estacion_end: null
+            }
+        });
     }
 }
 Bicicleta.init(
@@ -32,16 +39,18 @@ Bicicleta.init(
                 deferrable: Deferrable.INITIALLY_DEFERRED
             }
         },
-        bici_codigo: {
+        bicicleta_codigo: {
             type: DataTypes.STRING,
             allowNull: false,
             unique: true
         }
     },
     {
-        sequelize: sequelize,
+        sequelize: sequelizeConnection,
+        createdAt: false,
+        updatedAt: false,
         modelName: 'Bicicleta'
     }
 )
 
-module.exports = Bicicleta;
+export default Bicicleta;

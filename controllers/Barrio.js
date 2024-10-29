@@ -1,7 +1,7 @@
-const { Sequelize, DataTypes, Model } = require('sequelize');
-const sequelize = new Sequelize('sqlite::memory:');
+import { DataTypes, Model } from 'sequelize';
+import sequelizeConnection from '../middleware/sequelizeConnection.js';
 
-class Barrio extends Model {}
+export class Barrio extends Model {}
 Barrio.init(
     {
         barrio_id: {
@@ -17,11 +17,10 @@ Barrio.init(
         }
     },
     {
-        sequelize: sequelize,
+        sequelize: sequelizeConnection,
+        createdAt: false,
+        updatedAt: false,
         modelName: 'Barrio'
     }
 )
 
-console.log(Barrio === sequelize.models.Barrio); // true
-
-module.exports = Barrio;

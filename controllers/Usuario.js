@@ -1,25 +1,26 @@
-const { Sequelize, DataTypes, Model } = require('sequelize');
-const sequelize = new Sequelize('sqlite::memory:');
+import { DataTypes, Model } from 'sequelize';
+import sequelizeConnection from '../middleware/sequelizeConnection.js';
 
-class Usuario extends Model {
-    nombreCompleto() {
-        return [this.nombre.toUpperCase(), this.apellido.toUpperCase()].join(' ')
-    }
-    agregarDeuda(valor){
-        this.deuda_actual += valor;
-        this.deuda_historica += valor;
-    }
-    pagarDeuda(valor){
-        this.deuda_actual -= valor;
-    }
-    checkContrasena(pass){
-        return this.password == pass.hashCode;
-    }
-    retirarBici(biciId){
-        let bici = Bicicleta.findOne({bicicleta_id:biciId})
-        bici.retirar();
-        Retiro.create({bicicleta_id:biciId,user_id:this.user_id})
-    }
+export class Usuario extends Model {
+async nombreCompleto(){
+    return [this.nombre.toUpperCase(), this.apellido.toUpperCase()].join(' ')
+}
+async agregarDeuda(valor){
+    this.deuda_actual += valor;
+    this.deuda_historica += valor;
+}
+async pagarDeuda(valor){
+    this.deuda_actual -= valor;
+}
+async checkContrasena(pass){
+    return this.password == pass.hashCode;
+}
+async retirarBici(biciId){
+    let bici = Bicicleta.findOne({bicicleta_id:biciId})
+    await bici.retirar();
+    await Retiro.build({bicicleta_id:biciId,user_id:this.user_id})
+    await bici.save();
+}
 }
 Usuario.init(
     {
@@ -62,9 +63,10 @@ Usuario.init(
         }
     },
     {
-        sequelize: sequelize,
+        sequelize: sequelizeConnection,
+        createdAt: false,
+        updatedAt: false,
         modelName: 'Usuario'
     }
-)
-
-module.exports = Usuario;
+);
+export default Usuario;

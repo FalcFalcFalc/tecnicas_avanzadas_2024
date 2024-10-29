@@ -10,6 +10,7 @@
   "license": "ISC",
   "dependencies": {
     "@sequelize/mysql": "^7.0.0-alpha.43",
+    "@sequelize/sqlite3": "^7.0.0-alpha.43",
     "cors": "^2.8.5",
     "dotenv": "^16.0.1",
     "express": "^4.21.1",
@@ -21,5 +22,6 @@
     "sequelize": "^6.37.4",
     "sqlite3": "^5.1.7"
   },
-  "keywords": []
+  "keywords": [],
+  "type": "module"
 }

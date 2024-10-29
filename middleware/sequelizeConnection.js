@@ -1,10 +1,9 @@
-const { Sequelize } = require('sequelize');
-const { MySqlDialect } = require('@sequelize/mysql');
+import { Sequelize } from 'sequelize';
 
-const sequelizeConnection = new Sequelize('sqlite::memory:',{
-    dialect: MySqlDialect,
+const sequelizeConnection = new Sequelize({
+    dialect: "mysql",
     host:     "localhost",
-    user:     "root",
+    username:     "root",
     password: "contraseña12345",
     database: "db_tp",
     port: 3306,
@@ -13,4 +12,14 @@ const sequelizeConnection = new Sequelize('sqlite::memory:',{
     },
 });
 
-module.exports = sequelizeConnection;
+sequelizeConnection
+    .authenticate()
+    .then(() => {
+        console.log('Connection has been established successfully.');
+    })
+    .catch((error) => {
+        console.error('Unable to connect to the database: ', error);
+    });
+
+export default sequelizeConnection;
+

@@ -1,14 +1,17 @@
-const { Sequelize, DataTypes, Model, Deferrable } = require('sequelize');
-const sequelize = new Sequelize('sqlite::memory:');
+import{ Sequelize, DataTypes, Model, Deferrable } from 'sequelize';
+import sequelizeConnection from '../middleware/sequelizeConnection.js';
 
-const { Barrio } = require('./Barrio')
+import { Barrio } from './Barrio.js'
 
-class Estacion extends Model {
-    devolverBici(bici) {
-        let retiro = bici.getUltimoRetiro();
+export class Estacion extends Model {
+    async devolverBici(bici) {
+        let retiro = await bici.getUltimoRetiro();
 
         retiro.cerrar(this);
         bici.devolver(this);
+
+        retiro.save();
+        bici.save()
     }
 }
 Estacion.init(
@@ -35,9 +38,11 @@ Estacion.init(
         },
     },
     {
-        sequelize: sequelize,
+        sequelize: sequelizeConnection,
+        createdAt: false,
+        updatedAt: false,
         modelName: 'Estacion'
     }
 )
 
-module.exports = Estacion;
+export default Estacion;

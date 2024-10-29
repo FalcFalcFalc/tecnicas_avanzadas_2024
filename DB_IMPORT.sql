@@ -98,14 +98,14 @@ ENGINE = InnoDB;
 
 CREATE TABLE IF NOT EXISTS `db_tp`.`Retiro` (
   `user_id` INT NOT NULL,
-  `bici_id` INT NOT NULL,
+  `bicicleta_id` INT NOT NULL,
   `time_start` DATETIME NOT NULL,
   `estacion_start` INT NOT NULL,
   `time_end` DATETIME NULL,
   `estacion_end` INT NULL,
-  PRIMARY KEY (`user_id`, `bici_id`, `time_start`),
+  PRIMARY KEY (`user_id`, `bicicleta_id`, `time_start`),
   INDEX `estacion_id_idx` (`estacion_start` ASC, `estacion_end` ASC) VISIBLE,
-  INDEX `bici_id_idx` (`bici_id` ASC) VISIBLE,
+  INDEX `bicicleta_id_idx` (`bicicleta_id` ASC) VISIBLE,
   INDEX `user_id_idx` (`user_id` ASC) VISIBLE,
   CONSTRAINT `Retiro-Estacion1`
     FOREIGN KEY (`estacion_start`)
@@ -118,7 +118,7 @@ CREATE TABLE IF NOT EXISTS `db_tp`.`Retiro` (
     ON DELETE NO ACTION
     ON UPDATE NO ACTION,
   CONSTRAINT `Retiro-Bicicleta`
-    FOREIGN KEY (`bici_id`)
+    FOREIGN KEY (`bicicleta_id`)
     REFERENCES `db_tp`.`Bicicleta` (`bicicleta_id`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION,
