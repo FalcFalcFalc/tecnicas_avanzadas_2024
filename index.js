@@ -30,7 +30,6 @@ app.use(cors());
 app.use(express.json());
 
   app.get("/barrios/", async (req, res) => {
-    console.log(Barrio === sequelize.models.Barrio); // true
     const query = await Barrio.findAll({})
     res.status(200).json(query);
     /**
