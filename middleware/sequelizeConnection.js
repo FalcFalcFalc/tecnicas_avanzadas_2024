@@ -15,10 +15,10 @@ const sequelizeConnection = new Sequelize({
 sequelizeConnection
     .authenticate()
     .then(() => {
-        console.log('Connection has been established successfully.');
+        console.log('Conexion establecida!');
     })
     .catch((error) => {
-        console.error('Unable to connect to the database: ', error);
+        console.error('Error al conectar con la base: ', error);
     });
 
 export default sequelizeConnection;

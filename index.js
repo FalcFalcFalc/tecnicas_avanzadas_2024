@@ -231,22 +231,24 @@ app.listen(process.env.PORT || PORT);
   });
   
   app.post("/login", async(req,res)=>{
-    const username = req.headers.username;
-    const password = req.headers.password;
-    let u = await Usuario.findOne({
-      where: {
-        username: username
+    isAuthenticated(req,res,async()=>{
+      const username = req.headers.username;
+      const password = req.headers.password;
+      let u = await Usuario.findOne({
+        where: {
+          username: username
+        }
+      });
+
+
+      if(await u.loginAttemp(password)){
+        req.session.user = { id: u.user_id }; 
+        res.status(200).send("Inicio de sesión exitoso");
       }
-    });
-
-
-    if(await u.loginAttemp(password)){
-      req.session.user = { id: u.user_id }; 
-      res.status(200).send("Inicio de sesión exitoso");
-    }
-    else {
-      res.status(401).send("No autorizado");
-    }
+      else {
+        res.status(401).send("Credenciales incorrectas");
+      }
+    },true);
   });
 
   app.post('/logout', (req, res) => {

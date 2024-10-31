@@ -127,7 +127,7 @@ Bicicleta.init(
 
 export class Usuario extends Model {
     
-    async nombreCompleto(){
+    nombreCompleto(){
         return [this.nombre.toUpperCase(), this.apellido.toUpperCase()].join(' ')
     }
 
@@ -166,12 +166,11 @@ export class Usuario extends Model {
     
     async retirarBici(b){
         let r = await this.getUltimoRetiro();
-        console.log(r)
         if (r === null){
             let e = await b.retirar();
 
             if(e === null) {
-                return `Bicicleta ${b.bicicleta_id} está desacoplada`;
+                return `Bicicleta ${b.bicicleta_id} está siendo utilizada por ${(await Usuario.findByPk((await b.getUltimoRetiro()).user_id)).nombreCompleto()}`;
             }
 
             await Retiro.create({
@@ -180,7 +179,7 @@ export class Usuario extends Model {
                 estacion_start: e.estacion_id
             })
             await b.save();
-            return `Bicicleta ${b.bicicleta_id} retirada por ${await this.nombreCompleto()}`
+            return `Bicicleta ${b.bicicleta_id} retirada por ${this.nombreCompleto()}`
         }
         else{
             return "El usuario tiene un retiro abierto"
