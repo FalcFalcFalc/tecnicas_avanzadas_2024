@@ -2,7 +2,6 @@ import 'dotenv/config'
 import{ Sequelize, DataTypes, Model, Deferrable } from 'sequelize';
 import sequelizeConnection from '../middleware/sequelizeConnection.js';
 
-
 export class Barrio extends Model {}
 Barrio.init(
     {
