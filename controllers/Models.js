@@ -30,16 +30,29 @@ export class Estacion extends Model {
         let retiro = await bici.getUltimoRetiro();
 
         if(retiro == null) {
-            return `La bici ${bici.bicicleta_id} no estaba retirada`
+            return `La bici ${bici.bicicleta_id} no estaba retirada`;
+        }
+
+        if(this.cantidadDeEspaciosLibres() < 1){
+            return `La estacion está llena`; // esto sería raro que se use de forma real
         }
 
         retiro.cerrar(this);
         bici.devolver(this);
 
         retiro.save();
-        bici.save()
+        bici.save();
        
         return `Bicicleta ${bici.bicicleta_id} devuelta en en ${this.estacion_id}`;
+    }
+
+    async cantidadDeEspaciosLibres(){
+        let bicis = await Bicicleta.findAll({
+            where: {
+                estacion_id: this.estacion_id
+            }
+        });
+        return (this.capacidad - bicis.length);
     }
 }
 Estacion.init(
@@ -74,16 +87,16 @@ Estacion.init(
 )
 
 export class Bicicleta extends Model {
-    async retirar(){
+    async retirar() {
         let e = await Estacion.findByPk(this.estacion_id).finally(()=>{
             this.estacion_id = null;
         });
         return e;
     }
-    async devolver(estacion){
+    async devolver(estacion) {
         this.estacion_id = estacion.estacion_id
     }
-    async getUltimoRetiro(){
+    async getUltimoRetiro() {
         return await Retiro.findOne({
             where: {
                 bicicleta_id: this.bicicleta_id,
@@ -126,11 +139,11 @@ Bicicleta.init(
 
 export class Usuario extends Model {
     
-    nombreCompleto(){
+    nombreCompleto() {
         return [this.nombre.toUpperCase(), this.apellido.toUpperCase()].join(' ')
     }
 
-    async getUltimoRetiro(){
+    async getUltimoRetiro() {
         return await Retiro.findOne({
             where: {
                 user_id: this.user_id,
@@ -139,7 +152,7 @@ export class Usuario extends Model {
         });
     }
     
-    async loginAttemp(pw){
+    async loginAttemp(pw) {
         // dado que la encripcion de la contraseña es solo de ida,
         // si modelo un usuario con tan solo la contraseña, este
         // se poblara con la misma encriptacion y puedo corroborar
@@ -150,22 +163,22 @@ export class Usuario extends Model {
         return  this.password == l.password;
     }
 
-    async agregarDeuda(valor){
+    async agregarDeuda(valor) {
         this.deuda_actual += valor;
         this.deuda_historica += valor;
     }
     
-    async pagarDeuda(valor){
+    async pagarDeuda(valor) {
         this.deuda_actual -= valor;
     }
     
-    async checkContrasena(pass){
+    async checkContrasena(pass) {
         return this.password == pass.hashCode;
     }
     
-    async retirarBici(b){
+    async retirarBici(b) {
         let r = await this.getUltimoRetiro();
-        if (r === null){
+        if (r === null) {
             let e = await b.retirar();
 
             if(e === null) {
@@ -236,6 +249,11 @@ Usuario.init(
 
                 this.setDataValue('password', hash.toString(16));
             }
+        },
+        admin: {
+            type: DataTypes.BOOLEAN,
+            allowNull: false,
+            defaultValue: false
         }
     },
     {

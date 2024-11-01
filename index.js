@@ -5,7 +5,8 @@ import cors from "cors";
 import express, { json } from "express";
 import http from "http"
 import session from 'express-session';
-import isAuthenticated from './middleware/auth-middleware.js'
+import { isAuthenticated, isAdmin} from './middleware/auth-middleware.js'
+import filterQuery from './middleware/queryFiltering.js';
 
 import { Barrio, Bicicleta, Usuario, Estacion, Retiro } from './controllers/Models.js';
 
@@ -25,6 +26,8 @@ http.createServer(app);
 
 const PORT = 5000;
 app.listen(process.env.PORT || PORT);
+
+// OBTENCION DE RECURSOS
 
   app.get("/barrios/", async (req, res) => {
     let query = await Barrio.findAll({})
@@ -51,6 +54,19 @@ app.listen(process.env.PORT || PORT);
     res.status(200).json(query);
   });
 
+  app.get("/barrios/:id/estaciones/libres", async (req, res) => {
+    let {id} = req.params;
+    let query = (await Estacion.findAll({
+        where: {
+          barrio_id: id
+        }
+      }
+    ));
+    let filteredQuery = await filterQuery(query, async (n) => await n.cantidadDeEspaciosLibres() > 0)
+
+    res.status(200).json(filteredQuery);
+  });
+
   app.get("/bicicletas/", async (req, res) => {
     let query = await Bicicleta.findAll({})
     res.status(200).json(query);
@@ -69,6 +85,11 @@ app.listen(process.env.PORT || PORT);
   app.get("/estaciones/", async (req, res) => {
     let query = await Estacion.findAll()
     res.status(200).json(query);
+  });
+
+  app.get("/estaciones/libres/", async (req, res) => {
+    let filteredQuery = await filterQuery(await Estacion.findAll(), async (n) => await n.cantidadDeEspaciosLibres() > 0)
+    res.status(200).json(filteredQuery);
   });
 
   app.get("/estaciones/:id/", async (req, res) => {
@@ -169,37 +190,84 @@ app.listen(process.env.PORT || PORT);
     res.status(200).json(query);
   });
 
-// GET - POST - DELETE - PUT - PATCH 
+// CREACION DE RECURSOS
 
+  app.post("/estaciones/", async (req, res) => {
+    isAdmin(req,res,async()=>{
+      const barrio_id = req.headers.barrio_id;
+      const capacidad = req.headers.capacidad;
+
+      if(await Barrio.findByPk(barrio_id) === null) {
+        res.status(404).send("El barrio indicado no existe");
+        return;
+      }
+
+      res.status(200).send(await Estacion.create({
+        barrio_id: barrio_id,
+        capacidad: capacidad,
+      }));
+    })
+  });
+
+  app.post("/barrios/", async (req, res) => {
+    isAdmin(req,res,async()=>{
+      const nombre = req.headers.nombre;
+
+      res.status(200).send(await Barrio.create({
+        nombre: nombre
+      }));
+    })
+  });
   
   app.post("/usuarios/", async(req,res) => {
-    const nombre = req.headers.nombre;
-    const apellido = req.headers.apellido;
-    const username = req.headers.username;
-    const password = req.headers.password;
-    
-    res.status(200).send(await Usuario.create({
-      nombre: nombre,
-      apellido: apellido,
-      username: username,
-      password: password
-    }));
+    isAdmin(req,res,async()=>{
+
+      const nombre = req.headers.nombre;
+      const apellido = req.headers.apellido;
+      const username = req.headers.username;
+      const password = req.headers.password;
+      
+      res.status(200).send(await Usuario.create({
+        nombre: nombre,
+        apellido: apellido,
+        username: username,
+        password: password
+      }));
+    })
   }); 
+
+  app.post("/bicicletas/", async (req, res) => {
+    isAdmin(req,res,async()=>{
+      const estacion_id = req.headers.estacion_id;
+      const bicicleta_codigo = req.headers.bicicleta_codigo;
+
+      if(await Estacion.findByPk(estacion_id) === null) {
+        res.status(404).send("La estacion indicada no existe");
+        return;
+      }
+
+      res.status(200).send(await Bicicleta.create({
+        estacion_id: estacion_id,
+        bicicleta_codigo: bicicleta_codigo,
+      }));
+    })
+  });
+
+// MODELO DE NEGOCIO
 
   app.post("/retiros/", async(req,res) => {
     isAuthenticated(req,res, async () => {
       const bicicleta_id = req.headers.bicicleta_id;
-      const { id }      = req.session.user;
+      const { user }      = req.session.user;
   
-      const user = await Usuario.findByPk(id);
       if(user === null) {
-        res.status(501).send('Usuario no encontrado');
+        res.status(404).send('El usuario indicado no existe');
         return;
       }
       
       const bici = await Bicicleta.findByPk(bicicleta_id);
       if(bici === null) {
-        res.status(501).send('Bicicleta no encontrada');
+        res.status(404).send('El bicicleta indicado no existe');
         return;
       }
       
@@ -209,27 +277,29 @@ app.listen(process.env.PORT || PORT);
   }); 
 
   app.patch("/retiros/", async(req,res) => {
-    isAuthenticated(req,req,async()=>{
-      const bicicleta_id = req.headers.bicicleta_id;
-      const estacion_id = req.headers.estacion_id; // por cuestiones de seguridad debería ser una cookie instalada dentro
-                                                  //  de cada sistema de procesamiento interno de la estacion
+    // no autentico pero debido a que este no debería ser un endpoint publico
+    const bicicleta_id = req.headers.bicicleta_id;
+    const estacion_id = req.headers.estacion_id; 
+    // por cuestiones de seguridad esto (↑) debería ser una cookie instalada dentro
+    // de cada sistema de procesamiento interno de la estacion
 
-      const estacion = await Estacion.findByPk(estacion_id);
-      if(estacion === null) {
-        res.status(501).send('Estacion no encontrada');
-        return;
-      }
-      
-      const bici = await Bicicleta.findByPk(bicicleta_id);
-      if(bici === null) {
-        res.status(501).send('Bicicleta no encontrada');
-        return;
-      }
-      
-      res.status(200).send(await estacion.devolverBici(bici));
-    })
+    const estacion = await Estacion.findByPk(estacion_id);
+    if(estacion === null) {
+      res.status(404).send('La estacion indicada no existe');
+      return;
+    }
+    
+    const bici = await Bicicleta.findByPk(bicicleta_id);
+    if(bici === null) {
+      res.status(404).send('La bicicleta indicada no existe');
+      return;
+    }
+    
+    res.status(200).send(await estacion.devolverBici(bici));
   });
   
+// LOGIN
+
   app.post("/login", async(req,res)=>{
     isAuthenticated(req,res,async()=>{
       const username = req.headers.username;
@@ -241,8 +311,8 @@ app.listen(process.env.PORT || PORT);
       });
 
 
-      if(await u.loginAttemp(password)){
-        req.session.user = { id: u.user_id }; 
+      if(await u.loginAttemp(password)) {
+        req.session.user = u; 
         res.status(200).send("Inicio de sesión exitoso");
       }
       else {
