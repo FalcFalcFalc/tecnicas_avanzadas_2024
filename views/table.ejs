@@ -1,0 +1,18 @@
+<table border="1px">
+  <thead>
+    <% let h = data[0]; %>
+    <% for(const key in h.dataValues) { %>
+    <th><%= key %></th>
+    <% } %>
+  </thead>
+  <tbody>
+    <% for(const obj of data){
+      let values = obj.dataValues %>
+    <tr>
+      <% for(const key in values) { %>
+      <td><%= obj[key] %></td>
+      <% } %>
+    </tr>
+    <% } %>
+  </tbody>
+</table>
