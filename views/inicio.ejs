@@ -1,18 +1,107 @@
-<h1>
-    TP - Juan Falcone
-</h1>
+<head>
+  <style>
+    h1 {
+      color: whitesmoke;
+    }
 
-<h2>
+    body * {
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    body {
+      background-color: cadetblue;
+    }
+
+    table {
+      border-radius: 8px;
+      background-color: teal;
+      border: 8px outset powderblue;
+    }
+
+    th {
+      color: whitesmoke;
+      background-color: midnightblue;
+      text-align: right;
+    }
+
+    td {
+      border: 2px inset teal;
+      background-color: whitesmoke;
+      text-align: right;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>TP - Juan Falcone</h1>
+
+  <h2>
     <a href="javascript:history.back()">Atras</a>
-     - 
+    -
     <a href="/barrios">Barrios</a>
-     - 
+    -
     <a href="/estaciones">Estaciones</a>
-     - 
+    -
     <a href="/bicicletas">Bicicletas</a>
-     - 
+    -
     <a href="/retiros">Retiros</a>
-     - 
+    -
     <a href="/usuarios">Usuarios</a>
-</h2>
+    -
+    <a href="/login">Login</a>
+  </h2>
+  <div id="content">
+    <%- (template.length>0) ? template : 'No se encontraron '%>
+  </div>
+  <div id="pagOptions">
+    
+    <button id="btnPagBack" <%= (params.page>1) ? 'onclick=backPage()' : 'disabled' %> >Anterior</button>
+    <select id="selectItemCount" onchange="updateItemCount()">
+      <option value="5">5</option>
+      <option value="10">10</option>
+      <option value="25">25</option>
+      <option value="50">50</option>
+      <option value="100">100</option>
+    </select>
+     <button id="btnPagNext" <%= (hasNextPage) ? 'onclick=nextPage()' : 'disabled' %> >Siguiente</button>
+  </div>
+  <script>
+    const drpdwn = document.getElementById("selectItemCount");
+    let page = <%= Number(params.page || process.env.DEFAULT_PAGE + 1);%>;
+    let items = <%= Number(params.items || process.env.DEFAULT_ITEM_COUNT);%>;
 
+    const url = new URL(window.location);
+
+    drpdwn.value = items;
+
+    function nextPage() {
+      page++;
+
+      refresh();
+    }
+
+    function backPage() {
+      if (page > 1) {
+        page--;
+
+        refresh();
+      }
+    }
+
+    function updateItemCount() {
+      page = 1;
+      items = drpdwn.value;
+
+      refresh();
+    }
+
+    function refresh() {
+      url.searchParams.set("page", page);
+      url.searchParams.set("items", items);
+
+      console.log(url)
+      window.location = url;
+    }
+  </script>
+</body>

@@ -4,8 +4,10 @@ import bodyParser from "body-parser";
 import express, { json } from "express";
 import http from "http";
 import session from "express-session";
+
+import getPaginacion from "./middleware/paginacion.js";
 import { isAuthenticated, isAdmin } from "./middleware/auth-middleware.js";
-import createHtml from './middleware/ejsRenderer.js'
+import createHtml from "./middleware/ejsRenderer.js";
 import filterQuery from "./middleware/queryFiltering.js";
 import {
   Barrio,
@@ -37,110 +39,134 @@ const server = app.listen(process.env.PORT || PORT);
 // OBTENCION DE RECURSOS
 
 app.get("/barrios/", async (req, res) => {
-  let query = await Barrio.findAll({});
-  let html = await createHtml('table',{data:query});
+  let pagOptions = getPaginacion(req);
+
+  let query = await Barrio.findAll(pagOptions);
+  let html = await createHtml("table",query,req);
   res.status(200).send(html);
 });
 
 app.get("/barrios/:id/", async (req, res) => {
   let { id } = req.params;
-  let query = await Barrio.findOne({
+  let params = {
     where: {
       barrio_id: id,
     },
-  });
-  let html = await createHtml('table',{data:query});
+  };
+
+  let query = await Barrio.findOne(params);
+  let html = await createHtml("table",query,req);
   res.status(200).send(html);
 });
 
 app.get("/barrios/:id/estaciones/", async (req, res) => {
   let { id } = req.params;
-  let query = await Estacion.findAll({
+  let params = {
     where: {
       barrio_id: id,
     },
-  });
-  let html = await createHtml('table',{data:query});
+  };
+
+  let query = await Estacion.findAll(params);
+  let html = await createHtml("table",query,req);
   res.status(200).send(html);
 });
 
 app.get("/barrios/:id/estaciones/libres", async (req, res) => {
   let { id } = req.params;
-  let query = await Estacion.findAll({
+  let params = {
     where: {
       barrio_id: id,
     },
-  });
+  };
   let filteredQuery = await filterQuery(
-    query,
+    await Estacion.findAll(params),
     async (n) => (await n.cantidadDeEspaciosLibres()) > 0
   );
-  let html = await createHtml('table',{data:filteredQuery});
+  let html = await createHtml("table", { data: filteredQuery });
   res.status(200).send(html);
 });
 
 app.get("/bicicletas/", async (req, res) => {
-  let query = await Bicicleta.findAll({});
-  let html = await createHtml('table',{data:query});
+  let pagOptions = getPaginacion(req);
+
+  let query = await Bicicleta.findAll(pagOptions);
+  let html = await createHtml("table",query,req);
   res.status(200).send(html);
 });
 
 app.get("/bicicletas/:id/", async (req, res) => {
   let { id } = req.params;
-  let query = await Bicicleta.findAll({
+  let params = {
     where: {
       bicicleta_id: id,
     },
-  });
-  let html = await createHtml('table',{data:query});
+  };
+
+  let query = await Bicicleta.findAll(params);
+  let html = await createHtml("table",query,req);
   res.status(200).send(html);
 });
 
 app.get("/estaciones/", async (req, res) => {
-  let query = await Estacion.findAll();
-  let html = await createHtml('table',{data:query});
+  let pagOptions = getPaginacion(req);
+
+  let query = await Estacion.findAll(pagOptions);
+  let html = await createHtml("table",query,req);
   res.status(200).send(html);
 });
 
 app.get("/estaciones/libres/", async (req, res) => {
+  let pagOptions = getPaginacion(req);
+
   let filteredQuery = await filterQuery(
-    await Estacion.findAll(),
+    await Estacion.findAll(pagOptions),
     async (n) => (await n.cantidadDeEspaciosLibres()) > 0
   );
 
-  let html = await createHtml('table',{data:filteredQuery});
-  res.status(200).send(html);});
+  let html = await createHtml("table", { data: filteredQuery });
+  res.status(200).send(html);
+});
 
 app.get("/estaciones/:id/", async (req, res) => {
   let { id } = req.params;
-  let query = await Estacion.findAll({
+  let params = {
     where: {
       estacion_id: id,
     },
-  });
-  let html = await createHtml('table',{data:query});
+  };
+
+  let query = await Estacion.findAll(params);
+  let html = await createHtml("table",query,req);
   res.status(200).send(html);
 });
 
 app.get("/estaciones/:id/bicicletas/", async (req, res) => {
+  let pagOptions = getPaginacion(req);
   let { id } = req.params;
-  let query = await Bicicleta.findAll({
+  let params = {
     where: {
       estacion_id: id,
     },
-  });
-  let html = await createHtml('table',{data:query});
+    ...pagOptions,
+  };
+
+  let query = await Bicicleta.findAll(params);
+  let html = await createHtml("table",query,req);
   res.status(200).send(html);
 });
 
 app.get("/estaciones/:id/retiros/", async (req, res) => {
+  let pagOptions = getPaginacion(req);
   let { id } = req.params;
-  let query = await Retiro.findAll({
+  let params = {
     where: {
       [Op.or]: [{ estacion_end: id }, { estacion_start: id }],
     },
-  });
-  let html = await createHtml('table',{data:query});
+    ...pagOptions,
+  };
+  let query = await Retiro.findAll(params);
+  let html = await createHtml("table",query,req);
   res.status(200).send(html);
 });
 
@@ -151,30 +177,34 @@ app.get("/estaciones/:id/usuarios/", async (req, res) => {
       estacion_id: id,
     },
   });
-  let html = await createHtml('table',{data:query});
+  let html = await createHtml("table",query,req);
   res.status(200).send(html);
 });
 
 app.get("/usuarios/", async (req, res) => {
-  let query = await Usuario.findAll();
-  let html = await createHtml('table',{data:query});
+  let pagOptions = getPaginacion(req);
+
+  let query = await Usuario.findAll(pagOptions);
+  let html = await createHtml("table",query,req);
   res.status(200).send(html);
 });
 
 app.get("/usuarios/:id/", async (req, res) => {
   let { id } = req.params;
-  let query = await Usuario.findAll({
+  let params = {
     where: {
       user_id: id,
     },
-  });
-  let html = await createHtml('table',{data:query});
+  };
+  let query = await Usuario.findAll(params);
+  let html = await createHtml("table",query,req);
   res.status(200).send(html);
 });
 
 app.get("/usuarios/:id/bicicletas/", async (req, res) => {
+  let pagOptions = getPaginacion(req);
   let { id } = req.params;
-  let query = await Bicicleta.findAll({
+  let params = {
     include: [
       {
         model: Retiro,
@@ -185,74 +215,50 @@ app.get("/usuarios/:id/bicicletas/", async (req, res) => {
         },
       },
     ],
-  });
-  let html = await createHtml('table',{data:query});
+    ...pagOptions,
+  };
+  let query = await Bicicleta.findAll(params);
+  let html = await createHtml("table",query,req);
   res.status(200).send(html);
 });
 
 app.get("/retiros/", async (req, res) => {
-  let query = await Retiro.findAll();
-  let html = await createHtml('table',{data:query});
+  let pagOptions = getPaginacion(req);
+
+  let query = await Retiro.findAll(pagOptions);
+  let html = await createHtml("table",query,req);
   res.status(200).send(html);
 });
 
 app.get("/retiros/abiertos", async (req, res) => {
-  let query = await Retiro.findAll({
+  let pagOptions = getPaginacion(req);
+  let params = {
     attributes: ["user_id", "bicicleta_id", "time_start", "estacion_start"],
     where: {
       time_end: null,
     },
     order: [["time_start", "DESC"]],
-  });
-  let html = await createHtml('table',{data:query});
-  res.status(200).send(html);
-});
+    ...pagOptions,
+  };
+  let query = await Retiro.findAll(params);
+  console.log(query);
 
-app.get("/retiros/abiertos/bicicletas/", async (req, res) => {
-  let query = await Retiro.findAll({
-    attributes: [],
-    where: {
-      time_end: null,
-    },
-    order: [["time_start", "DESC"]],
-    include: [
-      {
-        model: Bicicleta,
-        required: true,
-        attributes: ["bicicleta_id", "bicicleta_codigo"],
-        as: "Bicicleta",
-      },
-    ],
-  });
-  let html = await createHtml('table',{data:query});
+  let html = await createHtml("table",query,req);
   res.status(200).send(html);
 });
 
 app.get("/retiros/cerrados", async (req, res) => {
-  let query = await Retiro.findAll({
+  let pagOptions = getPaginacion(req);
+  let params = {
     where: {
       [Op.not]: { time_end: null },
     },
     order: [["time_end", "DESC"]],
-  });
-  let html = await createHtml('table',{data:query});
-  res.status(200).send(html);
-});
+    ...pagOptions,
+  };
 
-app.get("/test/", async (req, res) => {
-  let query = await Promise.all(
-    await Usuario.findAll({
-      attributes: [
-        "user_id",
-        "nombre",
-        "apellido"
-      ],
-    })
-  );
-
-  
-  
-  let html = await createHtml('table',{data:query});
+  let query = await Retiro.findAll(params);
+  let html = await createHtml("table",query,req);
   res.status(200).send(html);
 });
 
@@ -420,7 +426,9 @@ app.post("/login", async (req, res) => {
 app.post("/logout", (req, res) => {
   req.session.destroy((err) => {
     if (err) {
-      return res.status(501).send("Hubo un error inesperado, pero no es tu culpa!");
+      return res
+        .status(501)
+        .send("Hubo un error inesperado, pero no es tu culpa!");
     }
     res.clearCookie("connect.sid");
     res.status(200).send("Sesión cerrada correctamente.");

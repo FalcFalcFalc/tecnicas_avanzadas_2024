@@ -1,18 +1,19 @@
-<table border="1px">
-  <thead>
-    <% let h = data[0]; %>
-    <% for(const key in h.dataValues) { %>
-    <th><%= key %></th>
-    <% } %>
-  </thead>
-  <tbody>
-    <% for(const obj of data){
-      let values = obj.dataValues %>
-    <tr>
-      <% for(const key in values) { %>
-      <td><%= obj[key] %></td>
+<% if (query.length>0) { %>
+  <table border="1px">
+    <thead>
+      <% for(const key in query[0].dataValues) { %>
+      <th><%= key %></th>
       <% } %>
-    </tr>
-    <% } %>
-  </tbody>
-</table>
+    </thead>
+    <tbody>
+      <% for(const obj of query){
+            let values = obj.dataValues %>
+      <tr>
+        <% for(const key in values) { %>
+        <td><%= obj[key] %></td>
+        <% } %>
+      </tr>
+      <% } %>
+    </tbody>
+  </table>
+<%}%>
