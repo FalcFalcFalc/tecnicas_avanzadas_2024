@@ -16,8 +16,8 @@ Cada **retiro** tiene
 - un timestamp de retiro y otro de devolucion
 - una **estacion** de salida y otra de llegada
 ### Acciones
-Para abrir un retiro se requiere de una bicicleta y de un usuario. La bicicleta es tomada como parámetro, el usuario es tomado desde la sesión actual. Desde la bicicleta se toma la estación de origen, se la elimina de la bicicleta y se graba la primera timestamp.
-Para cerrar un retiro se requiere de una bicicleta y una estacion. A la bicicleta se le asigna la nueva estación, la cual también es grabada en el retiro. Se graba la segunda timestamp y basandose en la diferencia entre el inicio y el fin se caulcula la deuda generada por el usuario, dando 30 minutos de gracia.
+- Para abrir un retiro se requiere de una bicicleta y de un usuario. La bicicleta es tomada como parámetro, el usuario es tomado desde la sesión actual. Desde la bicicleta se toma la estación de origen, se la elimina de la bicicleta y se graba la primera timestamp.
+- Para cerrar un retiro se requiere de una bicicleta y una estacion. A la bicicleta se le asigna la nueva estación, la cual también es grabada en el retiro. Se graba la segunda timestamp y basandose en la diferencia entre el inicio y el fin se caulcula la deuda generada por el usuario, dando 30 minutos de gracia.
 ## Middlewares
 ### Auth-Middleware
 Auth-Middleware es una coleccion de métodos que filtran si es que el usuario inició sesion o no, y si es administrador o no.
