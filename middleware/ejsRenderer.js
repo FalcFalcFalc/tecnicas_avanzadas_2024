@@ -2,8 +2,8 @@ import ejs from 'ejs';
 
 /**
  * Si data es un array, elimina el ultimo objeto y renderiza la página en base 
- * @param {Nombre de página} page nombre de la página a renderizar
- * @param {Any} data data para que utilice el archivo .ejs
+ * @param {String} page nombre de la página a renderizar
+ * @param {any} data data para que utilice el archivo .ejs
  * @param {Request} req request
  * @returns HTML String
  */
