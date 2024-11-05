@@ -193,9 +193,7 @@ export class Usuario extends Model {
         estacion_start: e.estacion_id,
       });
       await b.save();
-      return `Bicicleta ${
-        b.bicicleta_id
-      } retirada por ${this.nombreCompleto()}`;
+      return `Bicicleta ${b.bicicleta_id} retirada por ${this.nombreCompleto()}`;
     } else {
       return "El usuario tiene un retiro abierto";
     }

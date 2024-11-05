@@ -19,6 +19,7 @@ import {
 
 const app = express();
 app.use(json());
+app.use(express.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.set("view engine", "ejs");
 app.set("views", "./views");
@@ -36,13 +37,25 @@ http.createServer(app);
 const PORT = 5000;
 const server = app.listen(process.env.PORT || PORT);
 
+async function displayError(res, error) {
+  let html = await createHtml("mensaje", error);
+  res.status(200).send(html);
+}
+
+function error(res) {
+  return (error) => displayError(res, error).then();
+}
+
 // OBTENCION DE RECURSOS
 
 app.get("/barrios/", async (req, res) => {
   let pagOptions = getPaginacion(req);
-
-  let query = await Barrio.findAll(pagOptions);
-  let html = await createHtml("table",query,req);
+  let params = {
+    order: ["barrio_id"],
+    ...pagOptions,
+  };
+  let query = await Barrio.findAll(params);
+  let html = await createHtml("table", query, req);
   res.status(200).send(html);
 });
 
@@ -55,7 +68,7 @@ app.get("/barrios/:id/", async (req, res) => {
   };
 
   let query = await Barrio.findOne(params);
-  let html = await createHtml("table",query,req);
+  let html = await createHtml("table", query, req);
   res.status(200).send(html);
 });
 
@@ -68,7 +81,7 @@ app.get("/barrios/:id/estaciones/", async (req, res) => {
   };
 
   let query = await Estacion.findAll(params);
-  let html = await createHtml("table",query,req);
+  let html = await createHtml("table", query, req);
   res.status(200).send(html);
 });
 
@@ -83,7 +96,7 @@ app.get("/barrios/:id/estaciones/libres", async (req, res) => {
     await Estacion.findAll(params),
     async (n) => (await n.cantidadDeEspaciosLibres()) > 0
   );
-  let html = await createHtml("table", { data: filteredQuery });
+  let html = await createHtml("table", filteredQuery, req);
   res.status(200).send(html);
 });
 
@@ -91,7 +104,7 @@ app.get("/bicicletas/", async (req, res) => {
   let pagOptions = getPaginacion(req);
 
   let query = await Bicicleta.findAll(pagOptions);
-  let html = await createHtml("table",query,req);
+  let html = await createHtml("table", query, req);
   res.status(200).send(html);
 });
 
@@ -104,7 +117,7 @@ app.get("/bicicletas/:id/", async (req, res) => {
   };
 
   let query = await Bicicleta.findAll(params);
-  let html = await createHtml("table",query,req);
+  let html = await createHtml("table", query, req);
   res.status(200).send(html);
 });
 
@@ -112,7 +125,12 @@ app.get("/estaciones/", async (req, res) => {
   let pagOptions = getPaginacion(req);
 
   let query = await Estacion.findAll(pagOptions);
-  let html = await createHtml("table",query,req);
+  let html = await createHtml("table", query, req);
+  res.status(200).send(html);
+});
+
+app.get("/estaciones/form", async (req, res) => {
+  let html = await createHtml("devolver");
   res.status(200).send(html);
 });
 
@@ -124,7 +142,7 @@ app.get("/estaciones/libres/", async (req, res) => {
     async (n) => (await n.cantidadDeEspaciosLibres()) > 0
   );
 
-  let html = await createHtml("table", { data: filteredQuery });
+  let html = await createHtml("table", filteredQuery, req);
   res.status(200).send(html);
 });
 
@@ -137,7 +155,7 @@ app.get("/estaciones/:id/", async (req, res) => {
   };
 
   let query = await Estacion.findAll(params);
-  let html = await createHtml("table",query,req);
+  let html = await createHtml("table", query, req);
   res.status(200).send(html);
 });
 
@@ -152,7 +170,7 @@ app.get("/estaciones/:id/bicicletas/", async (req, res) => {
   };
 
   let query = await Bicicleta.findAll(params);
-  let html = await createHtml("table",query,req);
+  let html = await createHtml("table", query, req);
   res.status(200).send(html);
 });
 
@@ -166,7 +184,7 @@ app.get("/estaciones/:id/retiros/", async (req, res) => {
     ...pagOptions,
   };
   let query = await Retiro.findAll(params);
-  let html = await createHtml("table",query,req);
+  let html = await createHtml("table", query, req);
   res.status(200).send(html);
 });
 
@@ -177,7 +195,7 @@ app.get("/estaciones/:id/usuarios/", async (req, res) => {
       estacion_id: id,
     },
   });
-  let html = await createHtml("table",query,req);
+  let html = await createHtml("table", query, req);
   res.status(200).send(html);
 });
 
@@ -185,7 +203,7 @@ app.get("/usuarios/", async (req, res) => {
   let pagOptions = getPaginacion(req);
 
   let query = await Usuario.findAll(pagOptions);
-  let html = await createHtml("table",query,req);
+  let html = await createHtml("table", query, req);
   res.status(200).send(html);
 });
 
@@ -197,7 +215,7 @@ app.get("/usuarios/:id/", async (req, res) => {
     },
   };
   let query = await Usuario.findAll(params);
-  let html = await createHtml("table",query,req);
+  let html = await createHtml("table", query, req);
   res.status(200).send(html);
 });
 
@@ -218,16 +236,36 @@ app.get("/usuarios/:id/bicicletas/", async (req, res) => {
     ...pagOptions,
   };
   let query = await Bicicleta.findAll(params);
-  let html = await createHtml("table",query,req);
+  let html = await createHtml("table", query, req);
   res.status(200).send(html);
 });
 
 app.get("/retiros/", async (req, res) => {
-  let pagOptions = getPaginacion(req);
+  isAdmin(
+    req,
+    async () => {
+      let pagOptions = getPaginacion(req);
+      let params = {
+        order: [["time_start", "DESC"]],
+        ...pagOptions,
+      };
+      let query = await Retiro.findAll(params);
+      let html = await createHtml("table", query, req);
+      res.status(200).send(html);
+    },
+    error(res)
+  );
+});
 
-  let query = await Retiro.findAll(pagOptions);
-  let html = await createHtml("table",query,req);
-  res.status(200).send(html);
+app.get("/retiros/form", async (req, res) => {
+  isAuthenticated(
+    req,
+    async () => {
+      let html = await createHtml("retirar");
+      res.status(200).send(html);
+    },
+    error(res)
+  );
 });
 
 app.get("/retiros/abiertos", async (req, res) => {
@@ -241,9 +279,8 @@ app.get("/retiros/abiertos", async (req, res) => {
     ...pagOptions,
   };
   let query = await Retiro.findAll(params);
-  console.log(query);
 
-  let html = await createHtml("table",query,req);
+  let html = await createHtml("table", query, req);
   res.status(200).send(html);
 });
 
@@ -258,110 +295,132 @@ app.get("/retiros/cerrados", async (req, res) => {
   };
 
   let query = await Retiro.findAll(params);
-  let html = await createHtml("table",query,req);
+  let html = await createHtml("table", query, req);
   res.status(200).send(html);
 });
 
 // CREACION DE RECURSOS
 
 app.post("/estaciones/", async (req, res) => {
-  isAdmin(req, res, async () => {
-    const barrio_id = req.headers.barrio_id;
-    const capacidad = req.headers.capacidad;
+  isAdmin(
+    req,
+    async () => {
+      const barrio_id = req.headers.barrio_id;
+      const capacidad = req.headers.capacidad;
 
-    if ((await Barrio.findByPk(barrio_id)) === null) {
-      res.status(404).send("El barrio indicado no existe");
-      return;
-    }
+      if ((await Barrio.findByPk(barrio_id)) === null) {
+        res.status(404).send("El barrio indicado no existe");
+        return;
+      }
 
-    res.status(200).send(
-      await Estacion.create({
-        barrio_id: barrio_id,
-        capacidad: capacidad,
-      })
-    );
-  });
+      res.status(200).send(
+        await Estacion.create({
+          barrio_id: barrio_id,
+          capacidad: capacidad,
+        })
+      );
+    },
+    error(res)
+  );
 });
 
 app.post("/barrios/", async (req, res) => {
-  isAdmin(req, res, async () => {
-    const nombre = req.headers.nombre;
+  isAdmin(
+    req,
+    async () => {
+      const nombre = req.headers.nombre;
 
-    res.status(200).send(
-      await Barrio.create({
-        nombre: nombre,
-      })
-    );
-  });
+      res.status(200).send(
+        await Barrio.create({
+          nombre: nombre,
+        })
+      );
+    },
+    error(res)
+  );
 });
 
 app.post("/usuarios/", async (req, res) => {
-  isAdmin(req, res, async () => {
-    const nombre = req.headers.nombre;
-    const apellido = req.headers.apellido;
-    const username = req.headers.username;
-    const password = req.headers.password;
+  isAdmin(
+    req,
+    async () => {
+      const nombre = req.headers.nombre;
+      const apellido = req.headers.apellido;
+      const username = req.headers.username;
+      const password = req.headers.password;
 
-    res.status(200).send(
-      await Usuario.create({
-        nombre: nombre,
-        apellido: apellido,
-        username: username,
-        password: password,
-      })
-    );
-  });
+      res.status(200).send(
+        await Usuario.create({
+          nombre: nombre,
+          apellido: apellido,
+          username: username,
+          password: password,
+        })
+      );
+    },
+    error(res)
+  );
 });
 
 app.post("/bicicletas/", async (req, res) => {
-  isAdmin(req, res, async () => {
-    const estacion_id = req.headers.estacion_id;
-    const bicicleta_codigo = req.headers.bicicleta_codigo;
+  isAdmin(
+    req,
+    async () => {
+      const estacion_id = req.headers.estacion_id;
+      const bicicleta_codigo = req.headers.bicicleta_codigo;
 
-    if ((await Estacion.findByPk(estacion_id)) === null) {
-      res.status(404).send("La estacion indicada no existe");
-      return;
-    }
+      if ((await Estacion.findByPk(estacion_id)) === null) {
+        res.status(404).send("La estacion indicada no existe");
+        return;
+      }
 
-    res.status(200).send(
-      await Bicicleta.create({
-        estacion_id: estacion_id,
-        bicicleta_codigo: bicicleta_codigo,
-      })
-    );
-  });
+      res.status(200).send(
+        await Bicicleta.create({
+          estacion_id: estacion_id,
+          bicicleta_codigo: bicicleta_codigo,
+        })
+      );
+    },
+    error(res)
+  );
 });
 
 // MODELO DE NEGOCIO
 
 app.post("/retiros/", async (req, res) => {
-  isAuthenticated(req, res, async () => {
-    const bicicleta_id = req.headers.bicicleta_id;
-    const { id } = req.session.user.id;
+  isAuthenticated(
+    req,
+    async () => {
+      const bicicleta_codigo = req.body.bicicleta_codigo;
+      const { id } = req.session.user;
 
-    let user = await Usuario.findByPk(id);
+      let user = await Usuario.findByPk(id);
 
-    console.log(user);
+      if (user === null) {
+        res.status(404).send("El usuario indicado no existe"); // sería raro que entre acá porque está logueado
+        return;
+      }
 
-    if (user === null) {
-      res.status(404).send("El usuario indicado no existe"); // sería raro que entre acá porque está logueado
-      return;
-    }
-
-    const bici = await Bicicleta.findByPk(bicicleta_id);
-    if (bici === null) {
-      res.status(404).send("El bicicleta indicado no existe");
-      return;
-    }
-
-    res.status(200).send(await user.retirarBici(bici));
-  });
+      const bici = await Bicicleta.findOne({
+        where: {
+          bicicleta_codigo: bicicleta_codigo,
+        },
+      });
+      if (bici === null) {
+        res.status(404).send("El bicicleta indicado no existe");
+        return;
+      }
+      let html = await createHtml("mensaje", await user.retirarBici(bici));
+      res.status(200).send(html);
+    },
+    error(res)
+  );
 });
 
-app.patch("/retiros/", async (req, res) => {
+app.post("/retiros/abiertos/", async (req, res) => {
   // no autentico pero debido a que este no debería ser un endpoint publico
-  const bicicleta_id = req.headers.bicicleta_id;
-  const estacion_id = req.headers.estacion_id;
+  const bicicleta_id = req.body.bicicleta_id;
+  const estacion_id = req.body.estacion_id;
   // por cuestiones de seguridad esto (↑) debería ser una cookie instalada dentro
   // de cada sistema de procesamiento interno de la estacion
 
@@ -377,60 +436,65 @@ app.patch("/retiros/", async (req, res) => {
     return;
   }
 
-  res.status(200).send(await estacion.devolverBici(bici));
+  let html = await createHtml("mensaje", await estacion.devolverBici(bici));
+  res.status(200).send(html);
 });
 
-app.patch("/deudas/", async (req, res) => {
-  isAdmin(req, res, async () => {
-    let query = await Retiro.findAll({
-      where: {
-        [Op.not]: { time_end: null },
-      },
-    });
-    let rec = 0;
-    for (let r of query) {
-      rec += await r.generarDeuda();
-      r.save();
-    }
-    res.status(200).send("Recuadado: $" + rec);
-  });
+app.post("/deudas/", async (req, res) => {
+  isAdmin(
+    req,
+    async () => {
+      let query = await Retiro.findAll({
+        where: {
+          [Op.not]: { time_end: null },
+        },
+      });
+      let rec = 0;
+      for (let r of query) {
+        rec += await r.generarDeuda();
+        r.save();
+      }
+      res.status(200).send("Recuadado: $" + rec);
+    },
+    error(res)
+  );
 });
 
 // LOGIN
 
-app.post("/login", async (req, res) => {
-  isAuthenticated(
-    // en este caso busco que no esté autenticado, mirar la línea ...
-    req,
-    res,
-    async () => {
-      const username = req.headers.username;
-      const password = req.headers.password;
-      let u = await Usuario.findOne({
-        where: {
-          username: username,
-        },
-      });
-
-      if (await u.loginAttemp(password)) {
-        req.session.user = { id: u.user_id, admin: u.admin };
-        res.status(200).send("Inicio de sesión exitoso");
-      } else {
-        res.status(401).send("Credenciales incorrectas");
-      }
-    },
-    true // <- este true invierte como funciona el método de autenticacion
-  );
+app.get("/login/", async (req, res) => {
+  let html = await createHtml("login", req.session);
+  res.status(200).send(html);
 });
 
-app.post("/logout", (req, res) => {
-  req.session.destroy((err) => {
+app.post("/login/", async (req, res) => {
+  const username = req.body.username;
+  const password = req.body.password;
+  let u = await Usuario.findOne({
+    where: {
+      username: username,
+    },
+  });
+
+  if (await u?.loginAttemp(password)) {
+    req.session.user = { id: u.user_id, admin: u.admin };
+    let html = await createHtml("mensaje", "Login mensajeso");
+    res.status(200).send(html);
+  } else {
+    res.status(401).redirect("/login/");
+  }
+});
+
+app.get("/logout", async (req, res) => {
+  req.session.destroy(async (err) => {
     if (err) {
       return res
         .status(501)
         .send("Hubo un error inesperado, pero no es tu culpa!");
     }
     res.clearCookie("connect.sid");
-    res.status(200).send("Sesión cerrada correctamente.");
+    res
+      .status(200)
+      .send(await createHtml("mensaje", "Sesión cerrada correctamente."));
   });
 });

@@ -1,0 +1,11 @@
+<% if (data.user) { %>
+    <p>Ya iniciaste sesón.</p>
+    <br>
+    <a href="/logout">Salir</a>
+<% } else { %>
+    <form id="loginCredentials" action="/login" method="post">
+        <input placeholder="Usuario" id="username" name="username" type="text"><br><br>
+        <input placeholder="Contraseña" id="password" name="password" type="password"><br><br>
+        <input id="send" type="submit" value="Enviar">
+    </form>
+<% } %>

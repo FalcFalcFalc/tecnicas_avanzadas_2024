@@ -1,17 +1,17 @@
-export  function isAuthenticated(req,res,next,inverse = false) {
-    if(!!req.session?.user?.id === inverse) // si inverso está desactivado o en default, si el usuario no está en la sesion, no pasara
-    {                                  // si inverso está activado, si el usuario esta en la sesion, no pasará
-        res.status(401).send((!inverse ? "No" : "Ya") + " iniciaste sesion.")
+export  function isAuthenticated(req,next,error) {
+    if(!req.session.user) 
+    {
+        error("No inició sesión");
     }
     else{
         next();
     }
 }
 
-export  function isAdmin(req,res,next) {
+export  function isAdmin(req,next,error) {
     if(!req.session?.user?.admin)
     {
-        res.status(401).send("Privilegios insuficientes.")
+        error("Acceso restringido");
     }
     else{
         next();

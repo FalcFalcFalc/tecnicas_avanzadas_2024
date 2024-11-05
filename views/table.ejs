@@ -1,12 +1,12 @@
-<% if (query.length>0) { %>
+<% if (data.length>0) { %>
   <table border="1px">
     <thead>
-      <% for(const key in query[0].dataValues) { %>
+      <% for(const key in data[0].dataValues) { %>
       <th><%= key %></th>
       <% } %>
     </thead>
     <tbody>
-      <% for(const obj of query){
+      <% for(const obj of data){
             let values = obj.dataValues %>
       <tr>
         <% for(const key in values) { %>

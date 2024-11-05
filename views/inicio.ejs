@@ -4,6 +4,10 @@
       color: whitesmoke;
     }
 
+    form * {
+        width: 12.5%;
+    }
+
     body * {
       margin-left: auto;
       margin-right: auto;
@@ -25,6 +29,10 @@
       text-align: right;
     }
 
+    p {
+      color: whitesmoke;
+    }
+
     td {
       border: 2px inset teal;
       background-color: whitesmoke;
@@ -37,8 +45,6 @@
   <h1>TP - Juan Falcone</h1>
 
   <h2>
-    <a href="javascript:history.back()">Atras</a>
-    -
     <a href="/barrios">Barrios</a>
     -
     <a href="/estaciones">Estaciones</a>
@@ -48,24 +54,39 @@
     <a href="/retiros">Retiros</a>
     -
     <a href="/usuarios">Usuarios</a>
+  </h2>
+  
+  <h3>
+    <a href="javascript:history.back()">Atras</a>
+    -
+    <a href="/estaciones/libres">Estaciones libres</a>
+    -
+    <a href="/retiros/abiertos">Retiros abiertos</a>
     -
     <a href="/login">Login</a>
-  </h2>
+    -
+    <a href="/logout">Logout</a>
+    -
+    <a href="/retiros/form">Retirar</a>
+    -
+    <a href="/estaciones/form">Devolver</a>
+  </h3>
   <div id="content">
     <%- (template.length>0) ? template : 'No se encontraron '%>
   </div>
-  <div id="pagOptions">
-    
-    <button id="btnPagBack" <%= (params.page>1) ? 'onclick=backPage()' : 'disabled' %> >Anterior</button>
-    <select id="selectItemCount" onchange="updateItemCount()">
-      <option value="5">5</option>
-      <option value="10">10</option>
-      <option value="25">25</option>
-      <option value="50">50</option>
-      <option value="100">100</option>
-    </select>
-     <button id="btnPagNext" <%= (hasNextPage) ? 'onclick=nextPage()' : 'disabled' %> >Siguiente</button>
-  </div>
+  <% if (params) { %>
+    <div id="pagOptions">
+        
+        <button id="btnPagBack" <%= (params.page>1) ? 'onclick=backPage()' : 'disabled' %> >Anterior</button>
+        <select id="selectItemCount" onchange="updateItemCount()">
+        <option value="5">5</option>
+        <option value="10">10</option>
+        <option value="25">25</option>
+        <option value="50">50</option>
+        <option value="100">100</option>
+        </select>
+        <button id="btnPagNext" <%= (hasNextPage) ? 'onclick=nextPage()' : 'disabled' %> >Siguiente</button>
+    </div>
   <script>
     const drpdwn = document.getElementById("selectItemCount");
     let page = <%= Number(params.page || process.env.DEFAULT_PAGE + 1);%>;
@@ -100,8 +121,8 @@
       url.searchParams.set("page", page);
       url.searchParams.set("items", items);
 
-      console.log(url)
       window.location = url;
     }
   </script>
+  <% } %>
 </body>
