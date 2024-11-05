@@ -1,3 +1,9 @@
+/**
+ * Filtra arrays utilizando criterio asincrónico, ideal para utilizar con métodos del objecto mismo
+ * @param {Array<T>} query 
+ * @param {async (T)=>Boolean} criterio 
+ * @returns Array<T>
+ */
 export default async function filterQuery(query, criterio) {
     return (await Promise.all( // filter no funciona correctamente de forma asincronica
         query

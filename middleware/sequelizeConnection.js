@@ -21,5 +21,8 @@ sequelizeConnection
         console.error('Error al conectar con la base: ', error);
     });
 
+    /**
+     * Constante de conexion a la ORM/MySQL
+     */
 export default sequelizeConnection;
 
