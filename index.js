@@ -9,13 +9,7 @@ import getPaginacion from "./middleware/paginacion.js";
 import { isAuthenticated, isAdmin } from "./middleware/auth-middleware.js";
 import createHtml from "./middleware/ejsRenderer.js";
 import filterQuery from "./middleware/queryFiltering.js";
-import {
-  Barrio,
-  Bicicleta,
-  Usuario,
-  Estacion,
-  Retiro,
-} from "./controllers/Models.js";
+import { Barrio, Bicicleta, Usuario, Estacion, Retiro } from "./controllers/Models.js";
 
 const app = express();
 app.use(json());
@@ -410,7 +404,15 @@ app.post("/retiros/", async (req, res) => {
         res.status(404).send("El bicicleta indicado no existe");
         return;
       }
-      let html = await createHtml("mensaje", await user.retirarBici(bici));
+
+      let mensaje;
+      try {
+        mensaje = (await user.retirarBici(bici)).toString();
+      } catch (error) {
+        mensaje = error
+      }
+      
+      let html = await createHtml("mensaje", mensaje);
       res.status(200).send(html);
     },
     error(res)
@@ -435,8 +437,14 @@ app.post("/retiros/abiertos/", async (req, res) => {
     res.status(404).send("La bicicleta indicada no existe");
     return;
   }
+  let mensaje;
+  try {
+    mensaje = (await estacion.devolverBici(bici)).toString();
+  } catch (error) {
+    mensaje = error
+  }
 
-  let html = await createHtml("mensaje", await estacion.devolverBici(bici));
+  let html = await createHtml("mensaje", mensaje);
   res.status(200).send(html);
 });
 

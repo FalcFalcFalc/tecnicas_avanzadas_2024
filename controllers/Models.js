@@ -3,7 +3,7 @@ import { Sequelize, DataTypes, Model, Deferrable } from "sequelize";
 import sequelizeConnection from "../middleware/sequelizeConnection.js";
 import calcularDeuda from "../middleware/calculadoraDeDeuda.js";
 
-export class Barrio extends Model {}
+export class Barrio extends Model { }
 Barrio.init(
   {
     barrio_id: {
@@ -27,15 +27,19 @@ Barrio.init(
 );
 
 export class Estacion extends Model {
+  /**
+   * Devuelve la bicicleta y devuelve el retiro cerrado
+   * @returns Retiro
+   */
   async devolverBici(bici) {
     let retiro = await bici.getUltimoRetiro();
 
     if (retiro == null) {
-      return `La bici ${bici.bicicleta_id} no estaba retirada`;
+      throw new Error(`La bici ${bici.bicicleta_id} no estaba retirada`);
     }
 
     if (this.cantidadDeEspaciosLibres() < 1) {
-      return `La estacion está llena`; // esto sería raro que se use de forma real
+      throw new Error(`La estacion está llena`); // esto sería raro que se use de forma real
     }
 
     retiro.cerrar(this);
@@ -44,9 +48,13 @@ export class Estacion extends Model {
     retiro.save();
     bici.save();
 
-    return `Bicicleta ${bici.bicicleta_id} devuelta en en ${this.estacion_id}`;
+    return retiro;
   }
 
+  /**
+   * Devuelve Capacidad - # (Bicicletas en la estacion)
+   * @returns cantidad de espacios libres
+   */
   async cantidadDeEspaciosLibres() {
     let bicis = await Bicicleta.findAll({
       where: {
@@ -88,15 +96,27 @@ Estacion.init(
 );
 
 export class Bicicleta extends Model {
-  async retirar() {
-    let e = await Estacion.findByPk(this.estacion_id).finally(() => {
-      this.estacion_id = null;
-    });
+  /**
+   * Elimina la estacion de la bicicleta y devuelve la id de la estacion
+   * @returns estacion_id 
+   */
+  retirar() {
+    let e = Number(this.estacion_id);
+    this.estacion_id = null;
     return e;
   }
+  /**
+   * Asigna la nueva estacion a la bicicleta
+   * @returns void
+   */
   async devolver(estacion) {
     this.estacion_id = estacion.estacion_id;
   }
+  /**
+   * Devuelve un retiro abierto
+   * Por como funciona el sistema, solo puede haber uno
+   * @returns Retiro
+   */
   async getUltimoRetiro() {
     return await Retiro.findOne({
       where: {
@@ -139,10 +159,18 @@ Bicicleta.init(
 );
 
 export class Usuario extends Model {
+  /**
+   * @returns nombre completo de la persona en mayusculas
+   */
   nombreCompleto() {
     return [this.nombre.toUpperCase(), this.apellido.toUpperCase()].join(" ");
   }
 
+  /**
+   * Devuelve un retiro abierto
+   * Por como funciona el sistema, solo puede haber uno
+   * @returns Retiro
+   */
   async getUltimoRetiro() {
     return await Retiro.findOne({
       where: {
@@ -152,6 +180,10 @@ export class Usuario extends Model {
     });
   }
 
+  /**
+   * Chequea si la contraseña es correcta
+   * @returns true or false
+   */
   async loginAttemp(pw) {
     // dado que la encripcion de la contraseña es solo de ida,
     // si modelo un usuario con tan solo la contraseña, este
@@ -163,39 +195,45 @@ export class Usuario extends Model {
     return this.password == l.password;
   }
 
+  /**
+   * Agrega la deuda a los dos campos de deuda
+   * @returns void
+   */
   async agregarDeuda(valor) {
     this.deuda_actual += valor;
     this.deuda_historica += valor;
   }
 
+  /**
+   * Resta la deuda de la deuda actual
+   * @returns void
+   */
   async pagarDeuda(valor) {
     this.deuda_actual -= valor;
   }
 
-  async checkContrasena(pass) {
-    return this.password == pass.hashCode;
-  }
-
+  /**
+   * Simula la accion del usuario retirando la bicicleta
+   * @returns devuelve un retiro o un error
+   */
   async retirarBici(b) {
     let r = await this.getUltimoRetiro();
-    if (r === null) {
-      let e = await b.retirar();
+    if (r != null) {
+      throw new Error("El usuario tiene un retiro abierto");
+    }
+    else {
+      let e = b.retirar();
+      await b.save();
 
       if (e === null) {
-        return `Bicicleta ${b.bicicleta_id} está siendo utilizada por ${(
-          await Usuario.findByPk((await b.getUltimoRetiro()).user_id)
-        ).nombreCompleto()}`;
+        throw new Error(`Bicicleta ${b.bicicleta_id} está siendo utilizada por ${await b.getUltimoRetiro().user_id}`);
       }
 
-      await Retiro.create({
+      return await Retiro.create({
         bicicleta_id: b.bicicleta_id,
         user_id: this.user_id,
-        estacion_start: e.estacion_id,
+        estacion_start: e,
       });
-      await b.save();
-      return `Bicicleta ${b.bicicleta_id} retirada por ${this.nombreCompleto()}`;
-    } else {
-      return "El usuario tiene un retiro abierto";
     }
   }
 }
@@ -266,9 +304,21 @@ Usuario.init(
 );
 
 export class Retiro extends Model {
+  /**
+   * @returns devuelve true si la estacion está cerrada
+   */
   async cerrado() {
     return this.estacion_end != null;
   }
+  toString() {
+    return `Bicicleta: ${this.bicicleta_id} 
+    Usuario: ${this.user_id} 
+    From: ${this.time_start} - ${this.estacion_start} 
+    ${(this.time_end ? `To ${this.time_end} - ${this.estacion_end}`: "")}`;
+  }
+  /**
+   * @returns Calcula la deuda y se la asigna al usuario
+   */
   async generarDeuda() {
     if (this.deuda_generada || this.time_end === null) {
       return 0;
@@ -284,6 +334,10 @@ export class Retiro extends Model {
     return null;
   }
 
+  /**
+   * 
+   * @returns 
+   */
   async cerrar(estacion) {
     this.estacion_end = estacion.estacion_id;
     this.time_end = Sequelize.fn("NOW");
