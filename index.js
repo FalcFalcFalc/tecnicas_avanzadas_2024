@@ -302,17 +302,19 @@ app.post("/estaciones/", async (req, res) => {
       const barrio_id = req.headers.barrio_id;
       const capacidad = req.headers.capacidad;
 
-      if ((await Barrio.findByPk(barrio_id)) === null) {
+      if ((await Barrio.findByPk(barrio_id))) {
+        res.status(200).send(
+          await Estacion.create({
+            barrio_id: barrio_id,
+            capacidad: capacidad,
+          })
+        );
+      }
+      else {
         res.status(404).send("El barrio indicado no existe");
         return;
       }
 
-      res.status(200).send(
-        await Estacion.create({
-          barrio_id: barrio_id,
-          capacidad: capacidad,
-        })
-      );
     },
     error(res)
   );
@@ -363,17 +365,18 @@ app.post("/bicicletas/", async (req, res) => {
       const estacion_id = req.headers.estacion_id;
       const bicicleta_codigo = req.headers.bicicleta_codigo;
 
-      if ((await Estacion.findByPk(estacion_id)) === null) {
+      if ((await Estacion.findByPk(estacion_id))) {
+        res.status(200).send(
+          await Bicicleta.create({
+            estacion_id: estacion_id,
+            bicicleta_codigo: bicicleta_codigo,
+          })
+        );
+      }
+      else {
         res.status(404).send("La estacion indicada no existe");
         return;
       }
-
-      res.status(200).send(
-        await Bicicleta.create({
-          estacion_id: estacion_id,
-          bicicleta_codigo: bicicleta_codigo,
-        })
-      );
     },
     error(res)
   );
@@ -388,30 +391,27 @@ app.post("/retiros/", async (req, res) => {
       const bicicleta_codigo = req.body.bicicleta_codigo;
       const { id } = req.session.user;
 
+      let mensaje = "Error desconocido";
       let user = await Usuario.findByPk(id);
+      if (user) {
+        const bici = await Bicicleta.findOne({ where: { bicicleta_codigo: bicicleta_codigo } });
 
-      if (user === null) {
-        res.status(404).send("El usuario indicado no existe"); // sería raro que entre acá porque está logueado
-        return;
+        if (bici) {
+          try {
+            mensaje = (await user.retirarBici(bici)).toString();
+          } catch (error) {
+            mensaje = error
+          }
+        }
+        else {
+          mensaje = "El bicicleta indicado no existe";
+        }
+
+      }
+      else {
+        mensaje = "El usuario indicado no existe"; // sería raro que entre acá porque está logueado
       }
 
-      const bici = await Bicicleta.findOne({
-        where: {
-          bicicleta_codigo: bicicleta_codigo,
-        },
-      });
-      if (bici === null) {
-        res.status(404).send("El bicicleta indicado no existe");
-        return;
-      }
-
-      let mensaje;
-      try {
-        mensaje = (await user.retirarBici(bici)).toString();
-      } catch (error) {
-        mensaje = error
-      }
-      
       let html = await createHtml("mensaje", mensaje);
       res.status(200).send(html);
     },
@@ -421,27 +421,29 @@ app.post("/retiros/", async (req, res) => {
 
 app.post("/retiros/abiertos/", async (req, res) => {
   // no autentico pero debido a que este no debería ser un endpoint publico
-  const bicicleta_id = req.body.bicicleta_id;
+  const bicicleta_codigo = req.body.bicicleta_codigo;
   const estacion_id = req.body.estacion_id;
   // por cuestiones de seguridad esto (↑) debería ser una cookie instalada dentro
   // de cada sistema de procesamiento interno de la estacion
 
+  let mensaje = "Error desconocido";
   const estacion = await Estacion.findByPk(estacion_id);
-  if (estacion === null) {
-    res.status(404).send("La estacion indicada no existe");
-    return;
-  }
+  if (estacion) {
+    const bici = await Bicicleta.findOne({ where: { bicicleta_codigo: bicicleta_codigo } });
 
-  const bici = await Bicicleta.findByPk(bicicleta_id);
-  if (bici === null) {
-    res.status(404).send("La bicicleta indicada no existe");
-    return;
+    if (bici) {
+      try {
+        mensaje = (await estacion.devolverBici(bici)).toString();
+      } catch (error) {
+        mensaje = error
+      }
+    } else {
+      mensaje = "La bicicleta indicada no existe";
+    }
+
   }
-  let mensaje;
-  try {
-    mensaje = (await estacion.devolverBici(bici)).toString();
-  } catch (error) {
-    mensaje = error
+  else {
+    mensaje = "La estacion indicada no existe";
   }
 
   let html = await createHtml("mensaje", mensaje);
@@ -486,7 +488,7 @@ app.post("/login/", async (req, res) => {
 
   if (await u?.loginAttemp(password)) {
     req.session.user = { id: u.user_id, admin: u.admin };
-    let html = await createHtml("mensaje", "Login mensajeso");
+    let html = await createHtml("mensaje", "Login exitoso");
     res.status(200).send(html);
   } else {
     res.status(401).redirect("/login/");

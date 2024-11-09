@@ -223,17 +223,20 @@ export class Usuario extends Model {
     }
     else {
       let e = b.retirar();
-      await b.save();
-
-      if (e === null) {
-        throw new Error(`Bicicleta ${b.bicicleta_id} está siendo utilizada por ${await b.getUltimoRetiro().user_id}`);
+      
+      if (e) {
+        await b.save();
+        
+        return await Retiro.create({
+          bicicleta_id: b.bicicleta_id,
+          user_id: this.user_id,
+          estacion_start: e,
+        });
+      }
+      else {
+        throw new Error(`Bicicleta ${b.bicicleta_id} está siendo utilizada por ${(await b.getUltimoRetiro()).user_id}`);
       }
 
-      return await Retiro.create({
-        bicicleta_id: b.bicicleta_id,
-        user_id: this.user_id,
-        estacion_start: e,
-      });
     }
   }
 }
