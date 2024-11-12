@@ -45,8 +45,8 @@ export class Estacion extends Model {
     retiro.cerrar(this);
     bici.devolver(this);
 
-    retiro.save();
-    bici.save();
+    await retiro.save();
+    await bici.save();
 
     return retiro;
   }
@@ -199,16 +199,18 @@ export class Usuario extends Model {
    * Agrega la deuda a los dos campos de deuda
    * @returns void
    */
-  async agregarDeuda(valor) {
+  agregarDeuda(valor) {
     this.deuda_actual += valor;
     this.deuda_historica += valor;
+
+    console.log()
   }
 
   /**
    * Resta la deuda de la deuda actual
    * @returns void
    */
-  async pagarDeuda(valor) {
+  pagarDeuda(valor) {
     this.deuda_actual -= valor;
   }
 
@@ -329,9 +331,11 @@ export class Retiro extends Model {
     let u = await Usuario.findByPk(this.user_id);
     if (u) {
       let deuda = calcularDeuda(this.time_start, this.time_end);
-      this.deuda_generada += deuda;
+      this.deuda_generada = deuda;
+
       u.agregarDeuda(deuda);
-      u.save();
+      await u.save();
+
       return deuda;
     }
     return null;
@@ -343,10 +347,11 @@ export class Retiro extends Model {
    */
   async cerrar(estacion) {
     this.estacion_end = estacion.estacion_id;
-    this.time_end = Sequelize.fn("NOW");
+    this.time_end = new Date();
 
-    this.generarDeuda();
-    this.save();
+    this.deuda_generada = await this.generarDeuda();
+
+    await this.save();
   }
 }
 Retiro.init(

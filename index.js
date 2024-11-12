@@ -462,7 +462,7 @@ app.post("/deudas/", async (req, res) => {
       let rec = 0;
       for (let r of query) {
         rec += await r.generarDeuda();
-        r.save();
+        await r.save();
       }
       res.status(200).send("Recuadado: $" + rec);
     },
