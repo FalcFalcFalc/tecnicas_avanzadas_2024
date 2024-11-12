@@ -15,7 +15,6 @@ export function addMinutes(date, minutes) {
  * @returns Number
  */
 export default function calcularDeuda(start, end) {
-    console.log("======= " + end + " - " + start);
     const startTime = addMinutes(new Date(start),30);
     const endTime   =  new Date(end);
 

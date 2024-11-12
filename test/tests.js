@@ -38,6 +38,7 @@ describe("Tests", async () => {
         await estacion?.destroy();
     });
 
+    // TESTS POSITIVOS
     it("Retiro y devolución funcionando", async () => {
         assert.equal(bicicleta.estacion_id, estacion.estacion_id);
 
@@ -105,7 +106,34 @@ describe("Tests", async () => {
         assert.equal(r.deuda_generada,deudaEsperada)
         assert.equal(usuario.deuda_actual,deudaBase+r.deuda_generada)
     })
+
+    // TESTS NEGATIVOS
+    it("Estacion llena", async()=>{
+        retiro = await usuario.retirarBici(bicicleta);
+        estacion.capacidad = 0;
+        await estacion.save();
+        try {
+            r = await estacion.devolverBici(bicicleta);
+            assert.fail()
+        } catch (error) {
+            // Resultado esperado
+        }
+    });
+    it("Devolver bicicleta no retirada", async()=>{
+        try {
+            r = await estacion.devolverBici(bicicleta);
+            assert.fail()
+        } catch (error) {
+            // Resultado esperado
+        }
+    });
+    it("Retirar bicicleta con retiro abierto", async()=>{
+        retiro = await usuario.retirarBici(bicicleta);
+        try {
+            r = await usuario.retirarBici(bicicleta);
+            assert.fail()
+        } catch (error) {
+            // Resultado esperado
+        }
+    });
 });
-
-
-//https://devox.me/PREG/c3e2da79-ac99

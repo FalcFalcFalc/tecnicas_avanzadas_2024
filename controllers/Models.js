@@ -38,7 +38,7 @@ export class Estacion extends Model {
       throw new Error(`La bici ${bici.bicicleta_id} no estaba retirada`);
     }
 
-    if (this.cantidadDeEspaciosLibres() < 1) {
+    if (await this.cantidadDeEspaciosLibres() < 1) {
       throw new Error(`La estacion está llena`); // esto sería raro que se use de forma real
     }
 
