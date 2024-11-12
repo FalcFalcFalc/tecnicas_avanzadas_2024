@@ -24,7 +24,7 @@ export default function calcularDeuda(start, end) {
         diffInMinutes = 0;
     }
     
+    console.log("++++++++++"+Number(process.env.PRECIO_POR_MINUTO))
     const result = diffInMinutes * Number(process.env.PRECIO_POR_MINUTO);
-    
     return result;
 }

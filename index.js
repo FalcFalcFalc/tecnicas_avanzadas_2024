@@ -9,6 +9,7 @@ import getPaginacion from "./middleware/paginacion.js";
 import { isAuthenticated, isAdmin } from "./middleware/auth-middleware.js";
 import createHtml from "./middleware/ejsRenderer.js";
 import filterQuery from "./middleware/queryFiltering.js";
+
 import { Barrio, Bicicleta, Usuario, Estacion, Retiro } from "./controllers/Models.js";
 
 const app = express();
@@ -421,7 +422,7 @@ app.post("/retiros/", async (req, res) => {
 
 app.post("/retiros/abiertos/", async (req, res) => {
   // no autentico pero debido a que este no debería ser un endpoint publico
-  const bicicleta_codigo = req.body.bicicleta_codigo;
+  const bicicleta_id = req.body.bicicleta_id;
   const estacion_id = req.body.estacion_id;
   // por cuestiones de seguridad esto (↑) debería ser una cookie instalada dentro
   // de cada sistema de procesamiento interno de la estacion
@@ -429,7 +430,7 @@ app.post("/retiros/abiertos/", async (req, res) => {
   let mensaje = "Error desconocido";
   const estacion = await Estacion.findByPk(estacion_id);
   if (estacion) {
-    const bici = await Bicicleta.findOne({ where: { bicicleta_codigo: bicicleta_codigo } });
+    const bici = await Bicicleta.findOne({ where: { bicicleta_id: bicicleta_id } });
 
     if (bici) {
       try {

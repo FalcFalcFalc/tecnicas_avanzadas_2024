@@ -40,20 +40,20 @@ describe("Tests", async () => {
 
     // TESTS POSITIVOS
     it("Retiro y devolución funcionando", async () => {
-        assert.equal(bicicleta.estacion_id, estacion.estacion_id);
+        assert.equal(bicicleta.estacion_id, estacion.estacion_id, "Bicicleta no asignada correctamente al inicio");
 
         retiro = await usuario.retirarBici(bicicleta);
-        assert.equal(retiro.time_end, null);
-        assert.equal(retiro.user_id, usuario.user_id);
+        assert.equal(retiro.time_end, null, "Retiro cerrado prematuramente");
+        assert.equal(retiro.user_id, usuario.user_id, "Usuario incorrecto en el retiro");
 
-        assert.equal(bicicleta.estacion_id, null);
-        assert.equal(retiro.estacion_start, estacion.estacion_id);
+        assert.equal(bicicleta.estacion_id, null, "Bicicleta no retirada");
+        assert.equal(retiro.estacion_start, estacion.estacion_id, "Estacion errónea pre devolucion");
 
         r = await estacion.devolverBici(bicicleta);
 
-        assert.equal(bicicleta.estacion_id, estacion.estacion_id);
-        assert.equal(retiro.bicicleta_id, r.bicicleta_id);
-        assert.notEqual(r.time_end, null);
+        assert.equal(bicicleta.estacion_id, estacion.estacion_id, "Estacion errónea post devolucion");
+        assert.equal(retiro.bicicleta_id, r.bicicleta_id, "Bicicleta errónea");
+        assert.notEqual(r.time_end, null, "Retiro no cerrado");
 
     });
     it("Menos de media hora cuesta gratis", async ()=>{
@@ -71,14 +71,13 @@ describe("Tests", async () => {
         });
 
         let r = await estacion.devolverBici(bicicleta);
-
-        assert.equal(retiro.user_id,r.user_id);
-        assert.equal(retiro.bicicleta_id,r.bicicleta_id);
-        assert.equal(new Date(retiro.time_start).setMilliseconds(0),new Date(r.time_start).setMilliseconds(0));
-
-        assert.equal(r.deuda_generada,0)
-        assert.equal(usuario.deuda_actual,deudaBase+r.deuda_generada)
-    })
+        assert.notEqual(r,null, "Retiro nulo al devolver");
+        assert.equal(retiro.user_id,r.user_id, "Usuario erróneo");
+        assert.equal(retiro.bicicleta_id,r.bicicleta_id, "Bicicleta errónea");
+        assert.equal(new Date(retiro.time_start).setMilliseconds(0),new Date(r.time_start).setMilliseconds(0), "Tiempos de salida distintos");
+        assert.equal(r.deuda_generada, 0, "Deuda generada distinta de 0");
+        assert.equal(usuario.deuda_actual,deudaBase+r.deuda_generada, "Al usuario no se le acredito correctamente la deuda");
+    });
     it("Más de media hora genera deuda", async ()=>{
         bicicleta.estacion_id = null;
         await bicicleta.save();
@@ -95,17 +94,17 @@ describe("Tests", async () => {
         });
 
         let r = await estacion.devolverBici(bicicleta);
-
-        assert.equal(retiro.user_id,r.user_id);
-        assert.equal(retiro.bicicleta_id,r.bicicleta_id);
-        assert.equal(new Date(retiro.time_start).setMilliseconds(0),new Date(r.time_start).setMilliseconds(0));
+        assert.notEqual(r,null, "Retiro nulo al devolver");
+        assert.equal(retiro.user_id,r.user_id, "Usuario erróneo");
+        assert.equal(retiro.bicicleta_id,r.bicicleta_id, "Bicicleta errónea");
+        assert.equal(new Date(retiro.time_start).setMilliseconds(0),new Date(r.time_start).setMilliseconds(0), "Tiempos de salida distintos");
 
         const deudaEsperada = noTiempoDeGracia * process.env.PRECIO_POR_MINUTO;
         usuario = await Usuario.findByPk(usuario.user_id);
 
-        assert.equal(r.deuda_generada,deudaEsperada)
-        assert.equal(usuario.deuda_actual,deudaBase+r.deuda_generada)
-    })
+        assert.equal(r.deuda_generada,deudaEsperada, `Deuda distinta de ${deudaEsperada}`);
+        assert.equal(usuario.deuda_actual,deudaBase+r.deuda_generada, "Al usuario no se le acredito correctamente la deuda");
+    });
 
     // TESTS NEGATIVOS
     it("Estacion llena", async()=>{
@@ -114,7 +113,7 @@ describe("Tests", async () => {
         await estacion.save();
         try {
             r = await estacion.devolverBici(bicicleta);
-            assert.fail()
+            assert.fail("Estando la estacion sin capacidad, la bicicleta se pudo devolver");
         } catch (error) {
             // Resultado esperado
         }
@@ -122,7 +121,7 @@ describe("Tests", async () => {
     it("Devolver bicicleta no retirada", async()=>{
         try {
             r = await estacion.devolverBici(bicicleta);
-            assert.fail()
+            assert.fail("Estando la bicicleta si retirar, se pudo devolver");
         } catch (error) {
             // Resultado esperado
         }
@@ -131,7 +130,7 @@ describe("Tests", async () => {
         retiro = await usuario.retirarBici(bicicleta);
         try {
             r = await usuario.retirarBici(bicicleta);
-            assert.fail()
+            assert.fail("Teniendo un retiro abierto, el usuario pudo retirar");
         } catch (error) {
             // Resultado esperado
         }
