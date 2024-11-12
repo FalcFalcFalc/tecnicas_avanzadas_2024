@@ -1,11 +1,11 @@
 /**
  * Agrega minutos a una fecha
- * @param {Date} date 
- * @param {Number} minutes 
+ * @param {Date} date
+ * @param {Number} minutes
  * @returns Date
  */
 export function addMinutes(date, minutes) {
-    return new Date(date.getTime() + minutes * 60 * 1000); //calculado en MS -> 1000 ms = 1 seg -> 60 seg = 1 min
+	return new Date(date.getTime() + minutes * 60 * 1000); //calculado en MS -> 1000 ms = 1 seg -> 60 seg = 1 min
 }
 
 /**
@@ -15,16 +15,15 @@ export function addMinutes(date, minutes) {
  * @returns Number
  */
 export default function calcularDeuda(start, end) {
-    const startTime = addMinutes(new Date(start),30);
-    const endTime   =  new Date(end);
+	const startTime = addMinutes(new Date(start), 30);
+	const endTime = new Date(end);
 
-    let diffInMinutes = Math.floor((endTime - startTime) / (1000 * 60));
+	let diffInMinutes = Math.floor((endTime - startTime) / (1000 * 60));
 
-    if (diffInMinutes < 0) {
-        diffInMinutes = 0;
-    }
-    
-    console.log("++++++++++"+Number(process.env.PRECIO_POR_MINUTO))
-    const result = diffInMinutes * Number(process.env.PRECIO_POR_MINUTO);
-    return result;
+	if (diffInMinutes < 0) {
+		diffInMinutes = 0;
+	}
+
+	const result = diffInMinutes * Number(process.env.PRECIO_POR_MINUTO);
+	return result;
 }
