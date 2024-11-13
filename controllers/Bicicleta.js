@@ -12,6 +12,9 @@ const BicicletaModule = (() => {
 			this.estacion_id = null;
 			return e;
 		}
+		toString() {
+			return `Bicicleta #${this.bicicleta_id} - ${this.bicicleta_codigo}`;
+		}
 		/**
 		 * Asigna la nueva estacion a la bicicleta
 		 * @returns void

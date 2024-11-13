@@ -2,6 +2,9 @@ import { DataTypes, Model } from 'sequelize';
 
 const BarrioModule = (() => {
 	class Barrio extends Model {
+		toString() {
+			return `Barrio ${this.barrio_id} - ${this.nombre}`;
+		}
 		static initialize(sequelize) {
 			Barrio.init(
 				{

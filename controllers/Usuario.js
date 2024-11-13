@@ -9,7 +9,9 @@ const UsuarioModule = (() => {
 		nombreCompleto() {
 			return [this.nombre.toUpperCase(), this.apellido.toUpperCase()].join(' ');
 		}
-
+		toString() {
+			return `Usuario #${this.user_id} - ${this.nombreCompleto()}`;
+		}
 		/**
 		 * Devuelve un retiro abierto
 		 * Por como funciona el sistema, solo puede haber uno
@@ -46,8 +48,6 @@ const UsuarioModule = (() => {
 		agregarDeuda(valor) {
 			this.deuda_actual += valor;
 			this.deuda_historica += valor;
-
-			console.log();
 		}
 
 		/**
@@ -78,9 +78,7 @@ const UsuarioModule = (() => {
 						estacion_start: e,
 					});
 				} else {
-					throw new Error(
-						`Bicicleta ${b.bicicleta_id} está siendo utilizada por ${(await b.getUltimoRetiro()).user_id}`
-					);
+					throw new Error(`Bicicleta ${b.bicicleta_id} está siendo utilizada por ${(await b.getUltimoRetiro()).user_id}`);
 				}
 			}
 		}

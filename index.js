@@ -48,6 +48,10 @@ app.get('/barrios/', async (req, res) => {
 	let params = {
 		order: ['barrio_id'],
 		...pagOptions,
+		attributes: [
+			['barrio_id', 'Id'],
+			['nombre', 'Descripcion'],
+		],
 	};
 	let query = await Barrio.findAll(params);
 	let html = await createHtml('table', query, req);
@@ -87,18 +91,22 @@ app.get('/barrios/:id/estaciones/libres', async (req, res) => {
 			barrio_id: id,
 		},
 	};
-	let filteredQuery = await filterQuery(
-		await Estacion.findAll(params),
-		async (n) => (await n.cantidadDeEspaciosLibres()) > 0
-	);
+	let filteredQuery = await filterQuery(await Estacion.findAll(params), async (n) => (await n.cantidadDeEspaciosLibres()) > 0);
 	let html = await createHtml('table', filteredQuery, req);
 	res.status(200).send(html);
 });
 
 app.get('/bicicletas/', async (req, res) => {
 	let pagOptions = getPaginacion(req);
-
-	let query = await Bicicleta.findAll(pagOptions);
+	let params = {
+		...pagOptions,
+		attributes: [
+			['bicicleta_id', 'Id'],
+			['bicicleta_codigo', 'Código'],
+			['estacion_id', 'Id de la estacion actual'],
+		],
+	};
+	let query = await Bicicleta.findAll(params);
 	let html = await createHtml('table', query, req);
 	res.status(200).send(html);
 });
@@ -118,8 +126,15 @@ app.get('/bicicletas/:id/', async (req, res) => {
 
 app.get('/estaciones/', async (req, res) => {
 	let pagOptions = getPaginacion(req);
-
-	let query = await Estacion.findAll(pagOptions);
+	let params = {
+		...pagOptions,
+		attributes: [
+			['estacion_id', 'Id'],
+			['barrio_id', 'Id del Barrio'],
+			['capacidad', 'Capacidad de la estacion'],
+		],
+	};
+	let query = await Estacion.findAll(params);
 	let html = await createHtml('table', query, req);
 	res.status(200).send(html);
 });
@@ -131,11 +146,10 @@ app.get('/estaciones/form', async (req, res) => {
 
 app.get('/estaciones/libres/', async (req, res) => {
 	let pagOptions = getPaginacion(req);
-
-	let filteredQuery = await filterQuery(
-		await Estacion.findAll(pagOptions),
-		async (n) => (await n.cantidadDeEspaciosLibres()) > 0
-	);
+	let params = {
+		...pagOptions,
+	};
+	let filteredQuery = await filterQuery(await Estacion.findAll(params), async (n) => (await n.cantidadDeEspaciosLibres()) > 0);
 
 	let html = await createHtml('table', filteredQuery, req);
 	res.status(200).send(html);
@@ -183,21 +197,18 @@ app.get('/estaciones/:id/retiros/', async (req, res) => {
 	res.status(200).send(html);
 });
 
-app.get('/estaciones/:id/usuarios/', async (req, res) => {
-	let { id } = req.params;
-	let query = await Usuario.findAll({
-		where: {
-			estacion_id: id,
-		},
-	});
-	let html = await createHtml('table', query, req);
-	res.status(200).send(html);
-});
-
 app.get('/usuarios/', async (req, res) => {
 	let pagOptions = getPaginacion(req);
-
-	let query = await Usuario.findAll(pagOptions);
+	let params = {
+		...pagOptions,
+		attributes: [
+			['user_id', 'Id'],
+			['nombre', 'Nombre'],
+			['apellido', 'Apellido'],
+			['username', 'Nombre de usuario'],
+		],
+	};
+	let query = await Usuario.findAll(params);
 	let html = await createHtml('table', query, req);
 	res.status(200).send(html);
 });
@@ -243,6 +254,14 @@ app.get('/retiros/', async (req, res) => {
 			let params = {
 				order: [['time_start', 'DESC']],
 				...pagOptions,
+				attributes: [
+					['bicicleta_id', 'Id Bicicleta'],
+					['user_id', 'Id Usuario'],
+					['estacion_start', 'Id Estacion Salida'],
+					['time_start', 'Timestamp Salida'],
+					['estacion_end', 'Id Estacion Llegada'],
+					['time_end', 'Timestamp Llegada'],
+				],
 			};
 			let query = await Retiro.findAll(params);
 			let html = await createHtml('table', query, req);
@@ -264,19 +283,29 @@ app.get('/retiros/form', async (req, res) => {
 });
 
 app.get('/retiros/abiertos', async (req, res) => {
-	let pagOptions = getPaginacion(req);
-	let params = {
-		attributes: ['user_id', 'bicicleta_id', 'time_start', 'estacion_start'],
-		where: {
-			time_end: null,
+	isAdmin(
+		req,
+		async () => {
+			let pagOptions = getPaginacion(req);
+			let params = {
+				attributes: [
+					['bicicleta_id', 'Id Bicicleta'],
+					['user_id', 'Id Usuario'],
+					['estacion_start', 'Id Estacion Salida'],
+					['time_start', 'Timestamp Salida'],
+				],
+				where: {
+					time_end: null,
+				},
+				order: [['time_start', 'DESC']],
+				...pagOptions,
+			};
+			let query = await Retiro.findAll(params);
+			let html = await createHtml('table', query, req);
+			res.status(200).send(html);
 		},
-		order: [['time_start', 'DESC']],
-		...pagOptions,
-	};
-	let query = await Retiro.findAll(params);
-
-	let html = await createHtml('table', query, req);
-	res.status(200).send(html);
+		error(res)
+	);
 });
 
 app.get('/retiros/cerrados', async (req, res) => {

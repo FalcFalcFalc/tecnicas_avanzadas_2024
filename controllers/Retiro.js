@@ -13,10 +13,19 @@ const RetiroModule = (() => {
 			return this.estacion_end != null;
 		}
 		toString() {
-			return `Bicicleta: ${this.bicicleta_id} 
-          Usuario: ${this.user_id} 
-          From: ${this.time_start} - ${this.estacion_start} 
-          ${this.time_end ? `To ${this.time_end} - ${this.estacion_end}` : ''}`;
+			return (
+				'Retiro {Bicicleta: ' +
+				this.bicicleta_id +
+				', Usuario: ' +
+				this.user_id +
+				', From: { Estacion' +
+				this.estacion_start +
+				'@' +
+				this.time_start +
+				' }' +
+				(this.time_end ? ', To { Estacion: ' + this.estacion_end + '@' + this.time_end + ' }' : '') +
+				' }'
+			);
 		}
 		/**
 		 * @returns Calcula la deuda y se la asigna al usuario

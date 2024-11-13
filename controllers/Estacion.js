@@ -29,6 +29,10 @@ const EstacionModule = (() => {
 			return retiro;
 		}
 
+		toString() {
+			return `Estacion #${this.estacion_id} con capacidad ${this.capacidad}`;
+		}
+
 		/**
 		 * Devuelve Capacidad - # (Bicicletas en la estacion)
 		 * @returns cantidad de espacios libres

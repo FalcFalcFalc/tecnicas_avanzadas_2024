@@ -7,10 +7,10 @@
     </thead>
     <tbody>
       <% for(const obj of data){
-            let values = obj.dataValues %>
+            let values = obj.dataValues%>
       <tr>
         <% for(const key in values) { %>
-        <td><%= obj[key] %></td>
+        <td><%= values[key] %></td>
         <% } %>
       </tr>
       <% } %>
